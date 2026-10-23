@@ -6,10 +6,12 @@ module.exports = {
       {
         username: 'host01',
         password: 'password123',
+        school_id: 'SCH-001',
       },
       {
         username: 'host02',
         password: 'password123',
+        school_id: 'SCH-002',
       }
     ], {});
   },

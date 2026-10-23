@@ -29,6 +29,8 @@ module.exports = {
         set_id: sets[0].set_id,
         join_code: '123456',
         status: 'CLOSED',
+        started_at: new Date('2026-10-23T01:00:00Z'),
+        ended_at: new Date('2026-10-23T01:30:00Z'),
       },
     ]);
 
