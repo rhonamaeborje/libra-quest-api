@@ -1,22 +1,52 @@
 'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
-    /**
-     * Add altering commands here.
-     *
-     * Example:
-     * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
-     */
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable('answers', {
+      answer_id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      player_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'players',
+          key: 'player_id',
+        },
+        onDelete: 'CASCADE',
+      },
+      question_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'questions',
+          key: 'question_id',
+        },
+        onDelete: 'CASCADE',
+      },
+      choice_index: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      time_taken: {
+        type: Sequelize.FLOAT,
+        allowNull: false,
+      },
+      correct: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+      },
+      stars_earned: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+    });
   },
 
-  async down (queryInterface, Sequelize) {
-    /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
-  }
+  async down(queryInterface) {
+    await queryInterface.dropTable('answers');
+  },
 };
