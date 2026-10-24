@@ -21,6 +21,15 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      {
+        username: 'host03',
+        school_id: '55555555',
+        full_name: 'Third Host',
+        email: 'host03@example.com',
+        role: 'teacher',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ], {});
   },
 

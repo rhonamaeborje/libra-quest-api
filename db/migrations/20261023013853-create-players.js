@@ -32,16 +32,15 @@ module.exports = {
         defaultValue: 0,
       },
       createdAt: {
-        allowNull: true,
         type: Sequelize.DATE,
+        allowNull: true,
       },
       updatedAt: {
-        allowNull: true,
         type: Sequelize.DATE,
+        allowNull: true,
       },
     });
 
-    // Add unique constraint for one seat per account per game
     await queryInterface.addConstraint('players', {
       fields: ['session_id', 'user_id'],
       type: 'unique',
@@ -49,7 +48,7 @@ module.exports = {
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('players');
   },
 };

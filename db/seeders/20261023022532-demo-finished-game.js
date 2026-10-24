@@ -21,14 +21,16 @@ module.exports = {
       "SELECT user_id FROM users LIMIT 1"
     );
 
-    await queryInterface.bulkInsert('game_sessions', [
-      {
-        user_id: users[0].user_id,
-        set_id: sets[0].set_id,
-        join_code: '123456',
-        status: 'CLOSED',
-      },
-    ]);
+await queryInterface.bulkInsert('game_sessions', [
+  {
+    user_id: users[0].user_id,
+    set_id: sets[0].set_id,
+    join_code: '123456',
+    status: 'CLOSED',
+    started_at: new Date(Date.now() - 3600000),
+    ended_at: new Date(),
+  },
+]);
 
     const [sessions] = await db.query(
       "SELECT session_id FROM game_sessions WHERE join_code = '123456'"

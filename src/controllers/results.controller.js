@@ -25,7 +25,15 @@ async function getResults(req, res, next) {
       results,
     });
   } catch (error) {
-    next(error);
+    console.error('RESULTS ERROR:', error);
+
+    return res.status(500).json({
+      error: {
+        code: 'DEBUG',
+        message: error.message,
+        stack: error.stack,
+      },
+    });
   }
 }
 
