@@ -1,19 +1,21 @@
-// Translates between HTTP and the service. No SQL, no business rules.
 const pkg = require('../../package.json');
 const healthService = require('../services/health.service');
 
-async function getHealth(req, res) {
-  const database = await healthService.checkDatabase();
-  const healthy = database === 'up';
+async function getHealth(req, res, next) {
+  try {
+    const health = await healthService.getHealth();
 
-  res.status(healthy ? 200 : 503).json({
-    status: healthy ? 'ok' : 'degraded',
-    service: pkg.name,
-    version: pkg.version,
-    database,
-    uptime_seconds: Math.floor(process.uptime()),
-    timestamp: new Date().toISOString(),
-  });
+    res.status(200).json({
+      game: pkg.name,
+      status: health.status,
+      database: health.database,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
-module.exports = { getHealth };
+module.exports = {
+  getHealth,
+};

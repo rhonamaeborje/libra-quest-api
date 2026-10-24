@@ -1,14 +1,14 @@
-// The rule for the health check: the API is healthy when the database answers.
-// A service knows nothing about HTTP and writes no queries.
-const healthRepository = require('../repositories/health.repository');
+const { sequelize } = require('../models');
 
-async function checkDatabase() {
-  try {
-    await healthRepository.ping();
-    return 'up';
-  } catch (error) {
-    return 'down';
-  }
+async function getHealth() {
+  await sequelize.authenticate();
+
+  return {
+    status: 'ok',
+    database: 'up',
+  };
 }
 
-module.exports = { checkDatabase };
+module.exports = {
+  getHealth,
+};

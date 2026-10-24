@@ -1,22 +1,30 @@
 'use strict';
 
 module.exports = {
-  async up(queryInterface) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.bulkInsert('users', [
       {
         username: 'host01',
-        password: 'password123',
-        school_id: 'SCH-001',
+        school_id: '12345678',
+        full_name: 'Host User',
+        email: 'host01@example.com',
+        role: 'teacher',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         username: 'host02',
-        password: 'password123',
-        school_id: 'SCH-002',
-      }
+        school_id: '87654321',
+        full_name: 'Second Host',
+        email: 'host02@example.com',
+        role: 'teacher',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ], {});
   },
 
-  async down(queryInterface) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete('users', null, {});
   }
 };

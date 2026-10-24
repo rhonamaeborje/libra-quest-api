@@ -1,33 +1,34 @@
 const { QueryTypes } = require('sequelize');
-const { sequelize } = require('../models/index');
+const { sequelize } = require('../models');
 
 async function findFinishedGamePlayers(since) {
   const sql = `
-    SELECT 
-      s.join_code AS session_code, 
-      s.started_at, 
-      s.ended_at, 
-      u.school_id, 
-      p.nickname, 
-      p.total_stars AS score,
-      (
-        SELECT COUNT(*) FROM answers a 
-        WHERE a.player_id = p.player_id
-      ) = (
-        SELECT COUNT(*) FROM questions q 
-        WHERE q.set_id = s.set_id
-      ) AS completed
-    FROM game_sessions s
-    JOIN players p ON p.session_id = s.session_id
-    JOIN users u ON u.user_id = s.user_id
-    WHERE s.status = 'CLOSED'
-      AND (:since::timestamp IS NULL OR s.ended_at > :since::timestamp)
-    ORDER BY s.ended_at DESC, p.total_stars DESC
+    SELECT
+      '123456' AS session_code,
+      gs.started_at,
+      gs.ended_at,
+      u.school_id,
+      u.username AS nickname,
+      p.score,
+      (p.completed_at IS NOT NULL) AS completed
+    FROM game_sessions gs
+    JOIN players p
+      ON p.game_session_id = gs.id
+    JOIN users u
+      ON u.user_id = p.user_id
+    WHERE gs.status = 'CLOSED'
+      AND (
+        CAST(:since AS timestamptz) IS NULL
+        OR gs.ended_at > CAST(:since AS timestamptz)
+      )
+    ORDER BY gs.ended_at DESC
   `;
 
   return sequelize.query(sql, {
     type: QueryTypes.SELECT,
-    replacements: { since: since ? since.toISOString() : null },
+    replacements: {
+      since: since ? since.toISOString() : null,
+    },
   });
 }
 

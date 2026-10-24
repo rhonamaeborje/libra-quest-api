@@ -4,9 +4,10 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('players', {
       player_id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
+        allowNull: false,
         autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER,
       },
       session_id: {
         type: Sequelize.INTEGER,
@@ -15,21 +16,40 @@ module.exports = {
           model: 'game_sessions',
           key: 'session_id',
         },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
+      user_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
       nickname: {
-        type: Sequelize.STRING(20),
+        type: Sequelize.STRING,
         allowNull: false,
       },
       total_stars: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         defaultValue: 0,
       },
+      createdAt: {
+        allowNull: true,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: true,
+        type: Sequelize.DATE,
+      },
+    });
+
+    // Add unique constraint for one seat per account per game
+    await queryInterface.addConstraint('players', {
+      fields: ['session_id', 'user_id'],
+      type: 'unique',
+      name: 'unique_player_per_session_user',
     });
   },
 
-  async down(queryInterface) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('players');
   },
 };
