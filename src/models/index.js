@@ -12,6 +12,9 @@ const sequelize = new Sequelize(
 );
 
 const User = require('./user')(sequelize, DataTypes);
+const GameSession = require('./game-session')(sequelize, DataTypes);
+const Player = require('./player')(sequelize, DataTypes);
+const Question = require('./question')(sequelize, DataTypes);
 
 // Week 11: load your models here, one line each, then add their associations.
 
@@ -19,5 +22,8 @@ module.exports = {
   sequelize,
   Sequelize,
   DataTypes,
-  User
+  User,
+  GameSession,
+  Player,
+  Question,
 };
