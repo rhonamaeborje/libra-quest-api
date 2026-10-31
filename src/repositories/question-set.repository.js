@@ -4,12 +4,12 @@ function findAll() {
   return QuestionSet.findAll({ order: [['set_id', 'ASC']] });
 }
 
-function findAllByHost(hostId) {
-  return QuestionSet.findAll({ where: { host_id: hostId }, order: [['set_id', 'ASC']] });
+function findAllByHost(userId) {
+  return QuestionSet.findAll({ where: { user_id: userId }, order: [['set_id', 'ASC']] });
 }
 
 function findById(id) {
-  return QuestionSet.findByPk(id);
+  return QuestionSet.findByPk(id); // a row, or null
 }
 
 function create(data) {

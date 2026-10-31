@@ -6,10 +6,10 @@ function toJson(questionSet) {
   return {
     id: questionSet.set_id,
     title: questionSet.title,
+    description: questionSet.description,
     subject: questionSet.subject,
-    is_public: questionSet.is_public,
-    host_id: questionSet.host_id,
-    created_at: questionSet.created_at,
+    grade_level: questionSet.grade_level,
+    user_id: questionSet.user_id,
   };
 }
 
@@ -25,7 +25,7 @@ async function get(req, res) {
 }
 
 async function create(req, res) {
-  const data = matchedData(req, { locations: ['body'] });     // only fields that passed a rule
+  const data = matchedData(req, { locations: ['body'] });
   const questionSet = await questionSetService.create(data, req.user);
   res.status(201).json(toJson(questionSet));
 }

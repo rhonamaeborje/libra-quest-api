@@ -10,5 +10,5 @@ module.exports = (sequelize, DataTypes) =>
       email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
       role: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'PLAYER' },
     },
-    { tableName: 'users', timestamps: true, createdAt: 'created_at', updatedAt: false }
+    { tableName: 'users', timestamps: false }
   );
