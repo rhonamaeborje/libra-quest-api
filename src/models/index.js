@@ -16,6 +16,7 @@ const GameSession = require('./game-session')(sequelize, DataTypes);
 const Player = require('./player')(sequelize, DataTypes);
 const Question = require('./question')(sequelize, DataTypes);
 const Answer = require('./answer')(sequelize, DataTypes);
+const QuestionSet = require('./question-set')(sequelize, DataTypes);
 
 // Week 11: load your models here, one line each, then add their associations.
 
@@ -24,6 +25,7 @@ module.exports = {
   Sequelize,
   DataTypes,
   User,
+  QuestionSet,
   GameSession,
   Player,
   Question,
