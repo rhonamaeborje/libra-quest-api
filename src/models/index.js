@@ -18,6 +18,8 @@ const Question = require('./question')(sequelize, DataTypes);
 const Answer = require('./answer')(sequelize, DataTypes);
 const QuestionSet = require('./question-set')(sequelize, DataTypes);
 
+GameSession.hasMany(Player, { foreignKey: 'session_id' });
+Player.belongsTo(GameSession, { foreignKey: 'session_id' });
 // Week 11: load your models here, one line each, then add their associations.
 
 module.exports = {
