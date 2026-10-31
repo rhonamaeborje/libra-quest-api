@@ -49,7 +49,8 @@ async function create(setId, user) {
   throw new Error('Could not find a free join code after 5 attempts.');
 }
 
-// Rule: only the host of the game (or an admin) changes its status, and only to an allowed next status.
+// Rule: only the host of the game (or an admin) changes its status,
+// and only to an allowed next status.
 async function changeStatus(code, status, user) {
   const session = await findOrFail(code);
   if (session.user_id !== user.user_id && user.role !== 'ADMIN') {
@@ -59,7 +60,12 @@ async function changeStatus(code, status, user) {
   if (!allowed.includes(status)) {
     throw conflict('INVALID_STATUS_CHANGE', `A ${session.status} game cannot become ${status}.`);
   }
-  return sessionRepository.update(session, { status });
+
+  const changes = { status };
+  if (status === 'RUNNING') changes.started_at = new Date();
+  if (status === 'CLOSED') changes.ended_at = new Date();
+
+  return sessionRepository.update(session, changes);
 }
 
 module.exports = { findOrFail, create, changeStatus };

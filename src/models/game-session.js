@@ -23,6 +23,12 @@ module.exports = (sequelize, DataTypes) =>
         type: DataTypes.STRING(20),
         allowNull: false,
       },
+      started_at: {
+        type: DataTypes.DATE,
+      },
+      ended_at: {
+        type: DataTypes.DATE,
+      },
     },
     {
       tableName: 'game_sessions',

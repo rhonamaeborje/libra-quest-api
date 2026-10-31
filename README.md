@@ -76,3 +76,28 @@ Base URL: `http://localhost:3001/api/v1`
 | npm run db:check | Counts the rows in every table |
 | npm run db:reset | Empties the database, rebuilds every table and reloads the seed data |
 | npm run check | Runs the same automatic check that GitHub runs after every push |
+
+
+## API endpoints (Week 11)
+
+Base URL: `http://localhost:3001/api/v1`
+
+| Verb | URL | Who may call it | Success |
+|---|---|---|---|
+| GET | /health | Anyone | 200 |
+| GET | /game-info | Anyone | 200 |
+| GET | /results | The library (X-Hub-Key header) | 200 |
+| GET | /question-sets | A host (own sets) or an admin (all sets) | 200 |
+| POST | /question-sets | A host or an admin | 201 |
+| GET | /question-sets/{id} | The owner host or an admin | 200 |
+| PATCH | /question-sets/{id} | The owner host or an admin | 200 |
+| DELETE | /question-sets/{id} | The owner host or an admin | 204 |
+| POST | /sessions | A host or an admin | 201 |
+| GET | /sessions/{code} | Anyone | 200 |
+| PATCH | /sessions/{code} | The host of that game or an admin | 200 |
+| POST | /sessions/{code}/players | Any known account | 201 (new seat) / 200 (rejoin) |
+| GET | /sessions/{code}/players | Anyone | 200 |
+
+Until Week 12, the caller is identified with the header `X-Demo-User: <school_id>`.
+
+**Rule for "completed":** a player has completed a game when they have answered every question of that game's question set (built in Week 13).

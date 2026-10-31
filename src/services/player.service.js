@@ -3,9 +3,9 @@ const sessionService = require('./session.service');
 const { conflict } = require('../errors/app-error');
 const { constraintOf } = require('../errors/db-errors');
 
-const MAX_PLAYERS = 50;
+const DEFAULT_MAX_PLAYERS = 50;
 
-// Seven questions, in this order. The first "no" decides the answer.
+// Questions are asked in this order. The first "no" decides the answer.
 async function join(code, nickname, user) {
   const session = await sessionService.findOrFail(code);
 
@@ -16,7 +16,10 @@ async function join(code, nickname, user) {
   }
 
   // One game at a time: a seat in another RUNNING game blocks a new seat.
-  const elsewhere = await playerRepository.findRunningSeatElsewhere(user.user_id, session.session_id);
+  const elsewhere = await playerRepository.findRunningSeatElsewhere(
+    user.user_id,
+    session.session_id
+  );
   if (elsewhere) {
     throw conflict('ALREADY_IN_GAME', 'You are still playing another game. Finish it first.');
   }
@@ -28,8 +31,10 @@ async function join(code, nickname, user) {
   if (session.status !== 'LOBBY') {
     throw conflict('SESSION_NOT_JOINABLE', 'This game has already started.');
   }
+
+  const maxPlayers = session.max_players || DEFAULT_MAX_PLAYERS;
   const seatsTaken = await playerRepository.countBySession(session.session_id);
-  if (seatsTaken >= MAX_PLAYERS) {
+  if (seatsTaken >= maxPlayers) {
     throw conflict('SESSION_FULL', 'This game is full.');
   }
 
@@ -41,11 +46,13 @@ async function join(code, nickname, user) {
     });
     return { session, player, created: true };
   } catch (error) {
-    // Two join requests from the same account arrived at the same instant, and the other one won.
+    // Two join requests from the same account arrived at the same instant,
+    // and the other one won. Return the seat that exists.
     if (constraintOf(error) === 'unique_player_per_session_user') {
       const existing = await playerRepository.findSeat(session.session_id, user.user_id);
       return { session, player: existing, created: false };
     }
+    // A taken nickname reaches the error handler and answers 409 (constraint map).
     throw error;
   }
 }
