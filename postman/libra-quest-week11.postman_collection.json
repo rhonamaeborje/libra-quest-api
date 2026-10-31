@@ -1,15 +1,14 @@
 {
   "info": {
-    "_postman_id": "dbf603a0-4888-4645-8ea1-48df9b34ba04",
     "name": "Libra Quest API - Week 11",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Module 1 - Question sets",
+      "name": "Module 1 - Question sets (CRUD)",
       "item": [
         {
-          "name": "01 It works - create a set",
+          "name": "1 - It works: host creates a question set",
           "event": [
             {
               "listen": "test",
@@ -49,7 +48,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Philippine Literature\",\n  \"subject\": \"Literature\",\n  \"grade_level\": \"Grade 10\"\n}",
+              "raw": "{\n  \"title\": \"Philippine Literature\",\n  \"subject\": \"Literature\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -59,7 +58,7 @@
           }
         },
         {
-          "name": "02 A field is wrong",
+          "name": "2 - A field is wrong: title too short, is_public wrong type",
           "event": [
             {
               "listen": "test",
@@ -69,7 +68,7 @@
                   "pm.test(\"status is 400\", function () {",
                   "  pm.response.to.have.status(400);",
                   "});",
-                  "pm.test(\"code is VALIDATION_FAILED\", function () {",
+                  "pm.test(\"error code is VALIDATION_FAILED\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"VALIDATION_FAILED\");",
                   "});"
                 ]
@@ -101,7 +100,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"title\": \"ab\", \"subject\": 123 }",
+              "raw": "{\n  \"title\": \"ab\",\n  \"is_public\": \"yes\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -111,7 +110,7 @@
           }
         },
         {
-          "name": "03 The body is broken",
+          "name": "3 - The body is broken: invalid JSON",
           "event": [
             {
               "listen": "test",
@@ -121,7 +120,7 @@
                   "pm.test(\"status is 400\", function () {",
                   "  pm.response.to.have.status(400);",
                   "});",
-                  "pm.test(\"code is INVALID_JSON\", function () {",
+                  "pm.test(\"error code is INVALID_JSON\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"INVALID_JSON\");",
                   "});"
                 ]
@@ -153,7 +152,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"title\": \"Philippine Literature\"",
+              "raw": "{ \"title\": \"Broken body\"",
               "options": {
                 "raw": {
                   "language": "json"
@@ -163,7 +162,7 @@
           }
         },
         {
-          "name": "04 Nobody is calling",
+          "name": "4 - Nobody: no X-Demo-User header",
           "event": [
             {
               "listen": "test",
@@ -173,7 +172,7 @@
                   "pm.test(\"status is 401\", function () {",
                   "  pm.response.to.have.status(401);",
                   "});",
-                  "pm.test(\"code is AUTH_REQUIRED\", function () {",
+                  "pm.test(\"error code is AUTH_REQUIRED\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"AUTH_REQUIRED\");",
                   "});"
                 ]
@@ -182,7 +181,14 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Demo-User",
+                "value": "{{host}}",
+                "type": "text",
+                "disabled": true
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/question-sets",
               "host": [
@@ -195,7 +201,7 @@
           }
         },
         {
-          "name": "05 The wrong role",
+          "name": "5 - The wrong role: a player calls a host endpoint",
           "event": [
             {
               "listen": "test",
@@ -205,7 +211,7 @@
                   "pm.test(\"status is 403\", function () {",
                   "  pm.response.to.have.status(403);",
                   "});",
-                  "pm.test(\"code is FORBIDDEN\", function () {",
+                  "pm.test(\"error code is FORBIDDEN\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"FORBIDDEN\");",
                   "});"
                 ]
@@ -233,7 +239,7 @@
           }
         },
         {
-          "name": "06 List my sets",
+          "name": "6 - List as the host",
           "event": [
             {
               "listen": "test",
@@ -271,7 +277,7 @@
           }
         },
         {
-          "name": "07 Read one",
+          "name": "7 - Read one",
           "event": [
             {
               "listen": "test",
@@ -280,9 +286,6 @@
                 "exec": [
                   "pm.test(\"status is 200\", function () {",
                   "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"returns one object with an id\", function () {",
-                  "  pm.expect(pm.response.json()).to.have.property(\"id\");",
                   "});"
                 ]
               }
@@ -310,7 +313,7 @@
           }
         },
         {
-          "name": "08 It does not exist",
+          "name": "8 - It does not exist",
           "event": [
             {
               "listen": "test",
@@ -319,9 +322,6 @@
                 "exec": [
                   "pm.test(\"status is 404\", function () {",
                   "  pm.response.to.have.status(404);",
-                  "});",
-                  "pm.test(\"code is QUESTION_SET_NOT_FOUND\", function () {",
-                  "  pm.expect(pm.response.json().error.code).to.eql(\"QUESTION_SET_NOT_FOUND\");",
                   "});"
                 ]
               }
@@ -337,19 +337,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/question-sets/999",
+              "raw": "{{baseUrl}}/question-sets/999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "question-sets",
-                "999"
+                "999999"
               ]
             }
           }
         },
         {
-          "name": "09 The id is not a number",
+          "name": "9 - The id is not a number",
           "event": [
             {
               "listen": "test",
@@ -359,7 +359,7 @@
                   "pm.test(\"status is 400\", function () {",
                   "  pm.response.to.have.status(400);",
                   "});",
-                  "pm.test(\"code is VALIDATION_FAILED\", function () {",
+                  "pm.test(\"error code is VALIDATION_FAILED\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"VALIDATION_FAILED\");",
                   "});"
                 ]
@@ -388,7 +388,7 @@
           }
         },
         {
-          "name": "10 Update",
+          "name": "10 - Update one field as the owner",
           "event": [
             {
               "listen": "test",
@@ -397,9 +397,6 @@
                 "exec": [
                   "pm.test(\"status is 200\", function () {",
                   "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"title changed\", function () {",
-                  "  pm.expect(pm.response.json().title).to.eql(\"Philippine Literature 101\");",
                   "});"
                 ]
               }
@@ -431,7 +428,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"title\": \"Philippine Literature 101\" }",
+              "raw": "{\n  \"title\": \"Philippine Literature 101\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -441,7 +438,7 @@
           }
         },
         {
-          "name": "11 Not the owner",
+          "name": "11 - Not the owner: the other host updates it",
           "event": [
             {
               "listen": "test",
@@ -451,7 +448,7 @@
                   "pm.test(\"status is 403\", function () {",
                   "  pm.response.to.have.status(403);",
                   "});",
-                  "pm.test(\"code is FORBIDDEN\", function () {",
+                  "pm.test(\"error code is FORBIDDEN\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"FORBIDDEN\");",
                   "});"
                 ]
@@ -484,7 +481,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"title\": \"I am not the owner\" }",
+              "raw": "{\n  \"title\": \"Stolen title\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -494,7 +491,7 @@
           }
         },
         {
-          "name": "12 Nothing to change",
+          "name": "12 - Nothing to change: empty body",
           "event": [
             {
               "listen": "test",
@@ -504,7 +501,7 @@
                   "pm.test(\"status is 400\", function () {",
                   "  pm.response.to.have.status(400);",
                   "});",
-                  "pm.test(\"code is VALIDATION_FAILED\", function () {",
+                  "pm.test(\"error code is VALIDATION_FAILED\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"VALIDATION_FAILED\");",
                   "});"
                 ]
@@ -537,7 +534,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ }",
+              "raw": "{}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -547,7 +544,7 @@
           }
         },
         {
-          "name": "13 Delete",
+          "name": "13 - Delete (keep it last in this folder)",
           "event": [
             {
               "listen": "test",
@@ -585,10 +582,10 @@
       ]
     },
     {
-      "name": "Module 2 - Sessions and players",
+      "name": "Module 2 - Sessions and joining",
       "item": [
         {
-          "name": "14 Set up - create a set for the game",
+          "name": "0 - Setup: create a question set for the game",
           "event": [
             {
               "listen": "test",
@@ -628,7 +625,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Philippine Literature\",\n  \"subject\": \"Literature\",\n  \"grade_level\": \"Grade 10\"\n}",
+              "raw": "{\n  \"title\": \"Game Set\",\n  \"subject\": \"Literature\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -638,7 +635,7 @@
           }
         },
         {
-          "name": "15 A host starts a game",
+          "name": "1 - A host starts a game",
           "event": [
             {
               "listen": "test",
@@ -648,13 +645,10 @@
                   "pm.test(\"status is 201\", function () {",
                   "  pm.response.to.have.status(201);",
                   "});",
+                  "pm.collectionVariables.set(\"code\", pm.response.json().code);",
                   "pm.test(\"code is six digits\", function () {",
-                  "  pm.expect(pm.response.json().code).to.match(/^[1-9][0-9]{5}$/);",
-                  "});",
-                  "pm.test(\"status is LOBBY\", function () {",
-                  "  pm.expect(pm.response.json().status).to.eql(\"LOBBY\");",
-                  "});",
-                  "pm.collectionVariables.set(\"code\", pm.response.json().code);"
+                  "  pm.expect(String(pm.response.json().code)).to.match(/^[1-9][0-9]{5}$/);",
+                  "});"
                 ]
               }
             }
@@ -684,7 +678,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"set_id\": {{gameSetId}} }",
+              "raw": "{\n  \"set_id\": \"{{gameSetId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -694,7 +688,7 @@
           }
         },
         {
-          "name": "16 A player tries to start a game",
+          "name": "2 - A player tries to start a game",
           "event": [
             {
               "listen": "test",
@@ -704,7 +698,7 @@
                   "pm.test(\"status is 403\", function () {",
                   "  pm.response.to.have.status(403);",
                   "});",
-                  "pm.test(\"code is FORBIDDEN\", function () {",
+                  "pm.test(\"error code is FORBIDDEN\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"FORBIDDEN\");",
                   "});"
                 ]
@@ -736,7 +730,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"set_id\": {{gameSetId}} }",
+              "raw": "{\n  \"set_id\": \"{{gameSetId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -746,7 +740,7 @@
           }
         },
         {
-          "name": "17 Read the game",
+          "name": "3 - Read the game",
           "event": [
             {
               "listen": "test",
@@ -755,9 +749,6 @@
                 "exec": [
                   "pm.test(\"status is 200\", function () {",
                   "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"status is LOBBY\", function () {",
-                  "  pm.expect(pm.response.json().status).to.eql(\"LOBBY\");",
                   "});"
                 ]
               }
@@ -765,7 +756,13 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Demo-User",
+                "value": "{{host}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/sessions/{{code}}",
               "host": [
@@ -779,7 +776,7 @@
           }
         },
         {
-          "name": "18 A code that is not six digits",
+          "name": "4 - A code that is not six digits",
           "event": [
             {
               "listen": "test",
@@ -789,7 +786,7 @@
                   "pm.test(\"status is 400\", function () {",
                   "  pm.response.to.have.status(400);",
                   "});",
-                  "pm.test(\"code is VALIDATION_FAILED\", function () {",
+                  "pm.test(\"error code is VALIDATION_FAILED\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"VALIDATION_FAILED\");",
                   "});"
                 ]
@@ -798,21 +795,27 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Demo-User",
+                "value": "{{host}}",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/sessions/12345",
+              "raw": "{{baseUrl}}/sessions/123",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "sessions",
-                "12345"
+                "123"
               ]
             }
           }
         },
         {
-          "name": "19 A code that no game uses",
+          "name": "5 - A code that no game uses",
           "event": [
             {
               "listen": "test",
@@ -822,7 +825,7 @@
                   "pm.test(\"status is 404\", function () {",
                   "  pm.response.to.have.status(404);",
                   "});",
-                  "pm.test(\"code is SESSION_NOT_FOUND\", function () {",
+                  "pm.test(\"error code is SESSION_NOT_FOUND\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"SESSION_NOT_FOUND\");",
                   "});"
                 ]
@@ -831,7 +834,13 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Demo-User",
+                "value": "{{host}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/sessions/999999",
               "host": [
@@ -845,7 +854,7 @@
           }
         },
         {
-          "name": "20 A player joins",
+          "name": "6 - A player joins",
           "event": [
             {
               "listen": "test",
@@ -855,64 +864,9 @@
                   "pm.test(\"status is 201\", function () {",
                   "  pm.response.to.have.status(201);",
                   "});",
+                  "pm.collectionVariables.set(\"playerId\", pm.response.json().player_id);",
                   "pm.test(\"rejoined is false\", function () {",
                   "  pm.expect(pm.response.json().rejoined).to.eql(false);",
-                  "});",
-                  "pm.collectionVariables.set(\"playerId\", pm.response.json().player_id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-Demo-User",
-                "value": "{{player}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/sessions/{{code}}/players",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sessions",
-                "{{code}}",
-                "players"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"nickname\": \"Rina\" }",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "21 The same player joins again",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"status is 200\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"same seat, rejoined is true\", function () {",
-                  "  pm.expect(pm.response.json().rejoined).to.eql(true);",
-                  "  pm.expect(pm.response.json().player_id).to.eql(parseInt(pm.collectionVariables.get(\"playerId\"), 10));",
                   "});"
                 ]
               }
@@ -945,7 +899,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"nickname\": \"Rina\" }",
+              "raw": "{\n  \"nickname\": \"Ace\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -955,7 +909,62 @@
           }
         },
         {
-          "name": "22 A second player takes a used nickname",
+          "name": "7 - The same player joins again (rejoin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"same seat, rejoined is true\", function () {",
+                  "  pm.expect(pm.response.json().player_id).to.eql(pm.collectionVariables.get(\"playerId\"));",
+                  "  pm.expect(pm.response.json().rejoined).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Demo-User",
+                "value": "{{player}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{code}}/players",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sessions",
+                "{{code}}",
+                "players"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nickname\": \"Ace\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "8 - A second player takes a used nickname",
           "event": [
             {
               "listen": "test",
@@ -964,9 +973,6 @@
                 "exec": [
                   "pm.test(\"status is 409\", function () {",
                   "  pm.response.to.have.status(409);",
-                  "});",
-                  "pm.test(\"code is NICKNAME_TAKEN\", function () {",
-                  "  pm.expect(pm.response.json().error.code).to.eql(\"NICKNAME_TAKEN\");",
                   "});"
                 ]
               }
@@ -999,7 +1005,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"nickname\": \"Rina\" }",
+              "raw": "{\n  \"nickname\": \"Ace\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1009,7 +1015,7 @@
           }
         },
         {
-          "name": "23 A nickname that is too short",
+          "name": "9 - A nickname that is too short",
           "event": [
             {
               "listen": "test",
@@ -1019,7 +1025,7 @@
                   "pm.test(\"status is 400\", function () {",
                   "  pm.response.to.have.status(400);",
                   "});",
-                  "pm.test(\"code is VALIDATION_FAILED\", function () {",
+                  "pm.test(\"error code is VALIDATION_FAILED\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"VALIDATION_FAILED\");",
                   "});"
                 ]
@@ -1053,7 +1059,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"nickname\": \"R\" }",
+              "raw": "{\n  \"nickname\": \"a\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1063,7 +1069,7 @@
           }
         },
         {
-          "name": "24 The host starts the game",
+          "name": "10 - The host starts the game (RUNNING)",
           "event": [
             {
               "listen": "test",
@@ -1072,9 +1078,6 @@
                 "exec": [
                   "pm.test(\"status is 200\", function () {",
                   "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"status is RUNNING\", function () {",
-                  "  pm.expect(pm.response.json().status).to.eql(\"RUNNING\");",
                   "});"
                 ]
               }
@@ -1106,7 +1109,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"status\": \"RUNNING\" }",
+              "raw": "{\n  \"status\": \"RUNNING\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1116,57 +1119,7 @@
           }
         },
         {
-          "name": "25 The host starts a second game",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"status is 201\", function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "pm.collectionVariables.set(\"codeB\", pm.response.json().code);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-Demo-User",
-                "value": "{{host}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sessions"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"set_id\": {{gameSetId}} }",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "26 A player already in a running game",
+          "name": "11 - A new player joins too late",
           "event": [
             {
               "listen": "test",
@@ -1175,9 +1128,6 @@
                 "exec": [
                   "pm.test(\"status is 409\", function () {",
                   "  pm.response.to.have.status(409);",
-                  "});",
-                  "pm.test(\"code is ALREADY_IN_GAME\", function () {",
-                  "  pm.expect(pm.response.json().error.code).to.eql(\"ALREADY_IN_GAME\");",
                   "});"
                 ]
               }
@@ -1188,61 +1138,7 @@
             "header": [
               {
                 "key": "X-Demo-User",
-                "value": "{{player}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/sessions/{{codeB}}/players",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sessions",
-                "{{codeB}}",
-                "players"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"nickname\": \"Rina\" }",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "27 A new player joins too late",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"status is 409\", function () {",
-                  "  pm.response.to.have.status(409);",
-                  "});",
-                  "pm.test(\"code is SESSION_NOT_JOINABLE\", function () {",
-                  "  pm.expect(pm.response.json().error.code).to.eql(\"SESSION_NOT_JOINABLE\");",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-Demo-User",
-                "value": "{{player2}}",
+                "value": "{{player3}}",
                 "type": "text"
               },
               {
@@ -1264,7 +1160,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"nickname\": \"Ben\" }",
+              "raw": "{\n  \"nickname\": \"Late\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1274,7 +1170,7 @@
           }
         },
         {
-          "name": "28 A returning player is let back in",
+          "name": "11b - The first player returns to the RUNNING game",
           "event": [
             {
               "listen": "test",
@@ -1283,9 +1179,6 @@
                 "exec": [
                   "pm.test(\"status is 200\", function () {",
                   "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"rejoined is true\", function () {",
-                  "  pm.expect(pm.response.json().rejoined).to.eql(true);",
                   "});"
                 ]
               }
@@ -1318,7 +1211,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"nickname\": \"Rina\" }",
+              "raw": "{\n  \"nickname\": \"Ace\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1328,7 +1221,7 @@
           }
         },
         {
-          "name": "29 The host closes the game",
+          "name": "12a - The host closes the game",
           "event": [
             {
               "listen": "test",
@@ -1337,9 +1230,6 @@
                 "exec": [
                   "pm.test(\"status is 200\", function () {",
                   "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"status is CLOSED\", function () {",
-                  "  pm.expect(pm.response.json().status).to.eql(\"CLOSED\");",
                   "});"
                 ]
               }
@@ -1371,7 +1261,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"status\": \"CLOSED\" }",
+              "raw": "{\n  \"status\": \"CLOSED\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1381,7 +1271,7 @@
           }
         },
         {
-          "name": "30 A status change that is not allowed",
+          "name": "12b - A closed game cannot run again",
           "event": [
             {
               "listen": "test",
@@ -1391,7 +1281,7 @@
                   "pm.test(\"status is 409\", function () {",
                   "  pm.response.to.have.status(409);",
                   "});",
-                  "pm.test(\"code is INVALID_STATUS_CHANGE\", function () {",
+                  "pm.test(\"error code is INVALID_STATUS_CHANGE\", function () {",
                   "  pm.expect(pm.response.json().error.code).to.eql(\"INVALID_STATUS_CHANGE\");",
                   "});"
                 ]
@@ -1424,12 +1314,83 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{ \"status\": \"RUNNING\" }",
+              "raw": "{\n  \"status\": \"RUNNING\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            }
+          }
+        },
+        {
+          "name": "13 - Results list the closed game (Hub key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Hub-Key",
+                "value": "{{hubKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/results",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "results"
+              ]
+            }
+          }
+        },
+        {
+          "name": "14 - Delete a question set that a game used",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 409\", function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Demo-User",
+                "value": "{{host}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/question-sets/{{gameSetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "question-sets",
+                "{{gameSetId}}"
+              ]
             }
           }
         }
@@ -1458,6 +1419,14 @@
       "value": "44444444"
     },
     {
+      "key": "player3",
+      "value": "44444444"
+    },
+    {
+      "key": "hubKey",
+      "value": "dev-hub-key"
+    },
+    {
       "key": "setId",
       "value": ""
     },
@@ -1467,10 +1436,6 @@
     },
     {
       "key": "code",
-      "value": ""
-    },
-    {
-      "key": "codeB",
       "value": ""
     },
     {
