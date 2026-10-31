@@ -32,10 +32,6 @@ async function join(code, nickname, user) {
   if (seatsTaken >= MAX_PLAYERS) {
     throw conflict('SESSION_FULL', 'This game is full.');
   }
-  const sameName = await playerRepository.findByNickname(session.session_id, nickname);
-  if (sameName) {
-    throw conflict('NICKNAME_TAKEN', 'That nickname is already used in this game.');
-  }
 
   try {
     const player = await playerRepository.create({
