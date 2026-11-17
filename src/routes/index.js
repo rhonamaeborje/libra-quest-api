@@ -19,7 +19,7 @@ router.use(currentUser);
 router.use('/question-sets', require('./question-set.routes'));
 router.use('/sessions', require('./session.routes'));
 
-// Admin routes: remove the // only after user.routes.js exists
-// router.use('/users', require('./user.routes'));
+// Admin routes
+router.use('/users', require('./user.routes'));
 
 module.exports = router;

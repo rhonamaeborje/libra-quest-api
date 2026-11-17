@@ -7,12 +7,13 @@ const requireUser = require('../middlewares/require-user');
 
 const router = Router();
 
+// Guards run BEFORE validation, so strangers learn nothing about the rules.
 router.post('/', requireUser('HOST', 'ADMIN'), rules.createRules, validate, sessionController.create);
-router.get('/:code', rules.codeParam, validate, sessionController.get);
+router.get('/:code', requireUser(), rules.codeParam, validate, sessionController.get);
 router.patch('/:code', requireUser('HOST', 'ADMIN'), rules.statusRules, validate, sessionController.changeStatus);
 
 // Players are a part of a session, so their URLs sit under it.
 router.post('/:code/players', requireUser(), rules.joinRules, validate, playerController.join);
-router.get('/:code/players', rules.codeParam, validate, playerController.list);
+router.get('/:code/players', requireUser(), rules.codeParam, validate, playerController.list);
 
 module.exports = router;

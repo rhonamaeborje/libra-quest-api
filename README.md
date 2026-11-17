@@ -60,8 +60,19 @@ http://localhost:3001/api/v1
 Until Week 12, the caller is identified with:
 
 ```
-X-Demo-User: <school_id>
+Authorization: Bearer <token>
 ```
+
+## Demo accounts
+
+Password for every demo account: Libra-Demo-2026
+
+| School ID | Username | Role |
+|---|---|---|
+| 12345678 | host01 | HOST |
+| 87654321 | host02 | ADMIN |
+| 55555555 | player01 | PLAYER |
+| 44444444 | player02 | PLAYER |
 
 This is a temporary stand-in and is not security.
 
