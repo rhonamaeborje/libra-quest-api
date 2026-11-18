@@ -12,11 +12,14 @@ async function register({
   email,
   password: plainPassword,
 }) {
+  // No username sent? Make one from the school ID, for example user_20249901.
+  const finalUsername = username || `user_${school_id.replace(/\D/g, '')}`;
+
   if (await userRepository.findBySchoolId(school_id)) {
     throw conflict('SCHOOL_ID_TAKEN', 'An account with this school ID already exists.');
   }
 
-  if (await userRepository.findByUsername(username)) {
+  if (await userRepository.findByUsername(finalUsername)) {
     throw conflict('USERNAME_TAKEN', 'This username is already used.');
   }
 
@@ -29,7 +32,7 @@ async function register({
   try {
     return await userRepository.create({
       school_id,
-      username,
+      username: finalUsername,
       full_name,
       email,
       password_hash,

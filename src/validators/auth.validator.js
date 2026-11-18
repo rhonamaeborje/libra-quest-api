@@ -8,9 +8,12 @@ const register = [
     .isString().withMessage('school_id must be text.')
     .bail()
     .trim()
-    .matches(/^\d{8}$/).withMessage('school_id must be 8 digits.'),
+    .matches(/^(\d{8}|\d{4}-\d{4})$/)
+    .withMessage('school_id must look like 12345678 or 2024-0001.'),
 
+  // username is optional. If it is missing, the service makes one.
   body('username')
+    .optional()
     .isString().withMessage('username must be text.')
     .bail()
     .trim()
