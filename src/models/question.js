@@ -28,8 +28,17 @@ module.exports = (sequelize, DataTypes) =>
         allowNull: false,
       },
       time_limit_sec: {
+        position: { type: DataTypes.INTEGER, allowNull: true },
         type: DataTypes.INTEGER,
         allowNull: false,
+      },
+            time_limit_sec: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      position: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
     },
     {

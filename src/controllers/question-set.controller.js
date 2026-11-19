@@ -1,26 +1,35 @@
 const { matchedData } = require('express-validator');
 const questionSetService = require('../services/question-set.service');
+const { envelope } = require('../utils/paginate');
+const { toQuestionJson } = require('./question.controller');
 
 // What a client is allowed to see of a question set.
 function toJson(questionSet) {
-  return {
+  const json = {
     id: questionSet.set_id,
     title: questionSet.title,
     description: questionSet.description,
     subject: questionSet.subject,
     grade_level: questionSet.grade_level,
+    picture: questionSet.picture,
     user_id: questionSet.user_id,
   };
+  if (questionSet.questions) json.questions = questionSet.questions.map(toQuestionJson);
+  return json;
 }
 
 async function list(req, res) {
-  const questionSets = await questionSetService.list(req.user);
-  res.status(200).json(questionSets.map(toJson));
+  const query = matchedData(req, { locations: ['query'] });
+  const { page = 1, limit = 10 } = query;
+  const { rows, total } = await questionSetService.list(req.user, query);
+  res.status(200).json(envelope(rows.map(toJson), total, { page, limit }));
 }
 
 async function get(req, res) {
-  const { id } = matchedData(req);
-  const questionSet = await questionSetService.get(id, req.user);
+  const { id, include } = matchedData(req);
+  const questionSet = await questionSetService.get(id, req.user, {
+    withQuestions: include === 'questions',
+  });
   res.status(200).json(toJson(questionSet));
 }
 
@@ -43,4 +52,10 @@ async function remove(req, res) {
   res.status(204).end();
 }
 
-module.exports = { list, get, create, update, remove };
+async function uploadCover(req, res) {
+  const { id } = matchedData(req, { locations: ['params'] });
+  const questionSet = await questionSetService.uploadCover(id, req.file, req.user);
+  res.status(200).json(toJson(questionSet));
+}
+
+module.exports = { list, get, create, update, remove, uploadCover };
