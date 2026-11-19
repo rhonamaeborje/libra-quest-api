@@ -29,6 +29,14 @@ module.exports = (sequelize, DataTypes) =>
       ended_at: {
         type: DataTypes.DATE,
       },
+      current_position: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      question_started_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: 'game_sessions',

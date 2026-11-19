@@ -49,23 +49,60 @@ async function create(setId, user) {
   throw new Error('Could not find a free join code after 5 attempts.');
 }
 
-// Rule: only the host of the game (or an admin) changes its status,
-// and only to an allowed next status.
-async function changeStatus(code, status, user) {
+// Rule: only the host of the game (or an admin) changes it.
+// A body with current_position moves to the next question.
+// A body with status changes the status.
+async function changeStatus(code, body, user) {
   const session = await findOrFail(code);
   if (session.user_id !== user.user_id && user.role !== 'ADMIN') {
     throw forbidden('This game belongs to another host.');
   }
+
+  if (body.current_position !== undefined) {
+    return moveToQuestion(session, body.current_position);
+  }
+
+  const { status } = body;
   const allowed = NEXT_STATUS[session.status] || [];
   if (!allowed.includes(status)) {
     throw conflict('INVALID_STATUS_CHANGE', `A ${session.status} game cannot become ${status}.`);
   }
 
-  const changes = { status };
-  if (status === 'RUNNING') changes.started_at = new Date();
-  if (status === 'CLOSED') changes.ended_at = new Date();
+  const updates = { status };
+  if (status === 'RUNNING') {
+    const total = await sessionRepository.countQuestions(session.set_id);
+    if (total === 0) {
+      throw conflict('SET_HAS_NO_QUESTIONS', 'This question set has no questions yet.');
+    }
+    const now = new Date();
+    updates.started_at = now;
+    updates.current_position = 1;
+    updates.question_started_at = now; // the server's clock times every answer
+  }
+  if (status === 'CLOSED') updates.ended_at = new Date();
 
-  return sessionRepository.update(session, changes);
+  return sessionRepository.update(session, updates);
+}
+
+// Rule: only the NEXT question may be asked, and only while RUNNING.
+async function moveToQuestion(session, position) {
+  if (session.status !== 'RUNNING') {
+    throw conflict('SESSION_NOT_RUNNING', 'The game is not running.');
+  }
+  const total = await sessionRepository.countQuestions(session.set_id);
+  if (session.current_position >= total) {
+    throw conflict('NO_MORE_QUESTIONS', 'This was the last question. Close the game.');
+  }
+  if (position !== session.current_position + 1) {
+    throw conflict(
+      'NOT_NEXT_QUESTION',
+      `Only question ${session.current_position + 1} can come next.`
+    );
+  }
+  return sessionRepository.update(session, {
+    current_position: position,
+    question_started_at: new Date(),
+  });
 }
 
 module.exports = { findOrFail, create, changeStatus };

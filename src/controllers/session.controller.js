@@ -8,6 +8,7 @@ function toJson(session) {
     status: session.status,
     set_id: session.set_id,
     host_id: session.user_id,
+    current_position: session.current_position,
   };
 }
 
@@ -25,8 +26,8 @@ async function get(req, res) {
 
 async function changeStatus(req, res) {
   const { code } = matchedData(req, { locations: ['params'] });
-  const { status } = matchedData(req, { locations: ['body'] });
-  const session = await sessionService.changeStatus(code, status, req.user);
+  const body = matchedData(req, { locations: ['body'] });
+  const session = await sessionService.changeStatus(code, body, req.user);
   res.status(200).json(toJson(session));
 }
 

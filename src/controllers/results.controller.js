@@ -25,15 +25,9 @@ async function getResults(req, res, next) {
       results,
     });
   } catch (error) {
-    console.error('RESULTS ERROR:', error);
-
-    return res.status(500).json({
-      error: {
-        code: 'DEBUG',
-        message: error.message,
-        stack: error.stack,
-      },
-    });
+    // Unexpected errors go to the shared error handler: one error format,
+    // no stack trace sent to the client.
+    return next(error);
   }
 }
 
