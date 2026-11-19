@@ -7,7 +7,7 @@ function requireUser(...roles) {
   return function guard(req, res, next) {
     if (!req.user) {
   throw unauthorized(
-    'TEST TEST TEST',
+    'Log in first.',
     'AUTH_REQUIRED'
   );
 }
