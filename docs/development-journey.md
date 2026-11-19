@@ -5,7 +5,7 @@ Student: Rhona Mae Borje · Section: 3-2 · Group: Group 5
 One entry per milestone, written the week you did it. Newest at the bottom.
 
 ## M1 · Accounts, passwords and tokens
-- Dates worked: Nov 12 to Nov 17, 2026 · Time spent: [3 Hours per Day]
+- Dates worked: Nov 12 to Nov 17, 2026 · Time spent: about 3 hours per day
 - Goal: Replace the Week 11 `X-Demo-User` header with real accounts: register, log in with a password, get a token, and have roles decide who may do what.
 - What I built:
   - Migration `add-password-to-users` and the seeders `demo-passwords` and `demo-admin` (the demo admin is host02, school ID 87654321).
@@ -14,7 +14,7 @@ One entry per milestone, written the week you did it. Newest at the bottom.
   - Endpoints: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users`, `PATCH /users/:id/role`.
   - A guard (`requireUser`) on the session read routes, which were open before.
   - One Postman collection, `postman/libra-quest-api.postman_collection.json`, with 4 folders, 38 requests and tests on every request. My latest run: 101 tests passed, 0 failed.
-- Evidence: [pull request link] · f6b700c · 66d5fd1 · beff2ef
+- Evidence: https://github.com/rhonamaeborje/libra-quest-api/pull/3 · 66d5fd1 · 6693840 · 5e56fef
 - Problem I hit: `GET /auth/me` answered 401 "This token is not valid" even though login answered 200. Later, `POST /auth/register` answered 500 INTERNAL_ERROR, and the VS Code terminal showed: `null value in column "username" of relation "users" violates not-null constraint`.
 - How I solved it:
   - The 401: the `Token` box in Postman held the `JWT_SECRET` text from my `.env` file, not the token that login gave me. I got a new token from `POST /auth/login` and pasted that. The token starts with `eyJ` and has two dots. The secret does not.
