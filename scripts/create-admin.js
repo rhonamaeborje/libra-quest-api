@@ -16,6 +16,8 @@ async function main() {
   const [, created] = await User.findOrCreate({
     where: { school_id: schoolId },
     defaults: {
+      // Same rule as register in auth.service.js: user_ plus the digits of the school ID.
+      username: `user_${schoolId.replace(/\D/g, '')}`,
       full_name: 'Library Administrator',
       email: `${schoolId}@admin.invalid`,
       role: 'ADMIN',

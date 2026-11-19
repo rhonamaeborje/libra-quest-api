@@ -1,12 +1,12 @@
 // Loads .env once and fails fast when a required key is missing.
 require('dotenv').config({ quiet: true });
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+const databaseUrl = process.env.DATABASE_URL || '';
+
+// On a server (Render) one DATABASE_URL replaces the five DB_ keys.
 const REQUIRED = [
-  'DB_HOST',
-  'DB_PORT',
-  'DB_NAME',
-  'DB_USER',
-  'DB_PASSWORD',
+  ...(databaseUrl ? [] : ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD']),
   'HUB_API_KEY',
   'JWT_SECRET',
   'CORS_ORIGINS',
@@ -20,8 +20,36 @@ if (missing.length > 0) {
   );
 }
 
+// postgres://user:password@host:5432/name  ->  its five parts
+function databaseFromUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch (error) {
+    // The message must not repeat the URL: it contains the password.
+    throw new Error('DATABASE_URL is not a valid database address.');
+  }
+  return {
+    host: parsed.hostname,
+    port: Number(parsed.port) || 5432,
+    name: decodeURIComponent(parsed.pathname.replace(/^\//, '')),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+  };
+}
+
+const database = databaseUrl
+  ? databaseFromUrl(databaseUrl)
+  : {
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT),
+      name: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+    };
+
 module.exports = {
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
 
   port: Number(process.env.PORT) || 3001,
 
@@ -40,10 +68,10 @@ module.exports = {
     .filter(Boolean),
 
   db: {
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    name: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    ...database,
+    // Tests use a database of their own, so they never touch your real data.
+    name: nodeEnv === 'test' ? `${database.name}_test` : database.name,
+    // On Render's external address the connection needs SSL: DB_SSL=true.
+    ssl: process.env.DB_SSL === 'true',
   },
 };

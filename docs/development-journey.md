@@ -72,6 +72,24 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: The server decides time and score, never the client. Anything a client sends can be edited, so the answer request carries only which question and which choice, and the server works out the stars from its own clock.
 
 ## M4 · Automated tests and server preparation
+- Dates worked: Nov 19, 2026 (server preparation, branch `feature/deploy-prep`) · Time spent: 2 Hours
+- Goal: Make the API safe and ready to run on a real server (Render), and rehearse the production start on my computer before deploying. The automated tests half of M4 (branch `feature/tests`) is not done yet; I will add it to this entry when it is.
+- What I built:
+  - `src/app.js`: `trust proxy`, `helmet` (with `crossOriginResourcePolicy: cross-origin` so uploaded pictures can load from a frontend), and a `cors` allow list that reads `CORS_ORIGINS`. Check line L is green for both cases: a listed origin is allowed and an unlisted one is refused.
+  - `src/config/env.js` and `src/config/database.js`: when `DATABASE_URL` is set, the host, port, name, user and password come from it, so the five `DB_` keys are no longer required. `DB_SSL=true` turns on SSL. When `NODE_ENV` is `test`, the database name becomes `<DB_NAME>_test`, so tests can never touch my real data.
+  - `package.json`: the script `start:render` (run the migrations, create the first admin, start the server). No seeders on the server.
+  - `render.yaml`: named the web service and the database. No secret values are written in the file.
+  - `scripts/create-admin.js`: creates the first ADMIN from `ADMIN_SCHOOL_ID` and `ADMIN_PASSWORD`.
+  - Production rehearsal on my computer: an empty database (`libra_quest_rehearsal`), `DATABASE_URL`, `NODE_ENV=production` and the admin variables. The migrations ran, the admin was created, `/health` answered 200 with `"database": "up"`, and the admin logged in and got a token.
+- Evidence: [pull request link] · 1c6624c · 2614b55 · e1f326c · d0943c1 · aa1caa8 (check runs #50 to #55 green; local check: lines I, J and both L lines green)
+- Problem I hit: In the rehearsal, `npm run start:render` stopped before the API started. The terminal said `create-admin failed: notNull Violation: User.username cannot be null`. The migrations had all run, but the admin was not created.
+- How I solved it: The `users` table has a required `username` column. My register code makes a username from the school ID when none is sent, but the kit's `create-admin.js` did not, so the database refused the admin. I added `username: user_` plus the digits of the school ID to the `defaults` in `create-admin.js`, the same rule as register. I ran `npm run start:render` again and the admin was created. I used Claude to help me read the error and check my edit. I ran the rehearsal and every check myself.
+- Decision I made and why:
+  - The first admin's username is `user_` plus the school ID digits, the same rule as register, so both kinds of account are built one way. The cost: the admin's username is easy to guess, so the admin's safety depends on a strong password.
+  - There are no seeders on the server. My demo password would open accounts on a public API, so the first admin comes from environment variables instead. The cost: the live database starts empty, and I must create the host and the players by hand when I test it.
+  - Only the origins in `CORS_ORIGINS` may read the API's answers from a browser. The cost: every new frontend address must be added to that setting.
+- Changes to my design set: none.
+- What I would explain to a classmate: CORS only tells a browser which web pages may read the API's answers. curl and Postman ignore it, so it does not protect `/results`; the Hub key does.
 
 ## M5 · API documentation and deployment
 
