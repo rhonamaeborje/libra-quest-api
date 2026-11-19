@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) =>
       subject: { type: DataTypes.STRING, allowNull: false },
       grade_level: { type: DataTypes.STRING, allowNull: false },
       user_id: { type: DataTypes.INTEGER, allowNull: false },
+      picture: { type: DataTypes.STRING, allowNull: true },
     },
     { tableName: 'question_sets', timestamps: false }
   );
