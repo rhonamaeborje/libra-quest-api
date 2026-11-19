@@ -18,7 +18,7 @@ This is my own build of my group's game concept. Every commit in this repository
 | Validation and logging | express-validator, morgan |
 | Accounts and security | bcryptjs (password hashes), jsonwebtoken (login tokens), cors, helmet |
 | File upload | multer |
-| API testing | Postman (collection with tests) |
+| API testing | Postman (collection with tests), newman |
 
 ## Setup
 
@@ -110,11 +110,16 @@ A token lasts 1 hour (`JWT_EXPIRES_IN`). After that, log in again.
 | GET | /auth/me | Any logged-in account | 200 |
 | GET | /users | Admin | 200 |
 | PATCH | /users/:id/role | Admin (not for their own account) | 200 |
-| GET | /question-sets | Host/Admin | 200 |
+| GET | /question-sets | Host/Admin (a host sees their own sets, an admin sees all) | 200 |
 | POST | /question-sets | Host/Admin | 201 |
-| GET | /question-sets/:id | Owner Host/Admin | 200 |
+| GET | /question-sets/:id | Owner Host/Admin (`?include=questions` adds the questions) | 200 |
 | PATCH | /question-sets/:id | Owner Host/Admin | 200 |
 | DELETE | /question-sets/:id | Owner Host/Admin | 204 |
+| PUT | /question-sets/:id/cover | Owner Host/Admin | 200 |
+| GET | /question-sets/:id/questions | Owner Host/Admin | 200 |
+| POST | /question-sets/:id/questions | Owner Host/Admin | 201 |
+| PATCH | /question-sets/:id/questions/:questionId | Owner Host/Admin | 200 |
+| DELETE | /question-sets/:id/questions/:questionId | Owner Host/Admin | 204 |
 | POST | /sessions | Host/Admin | 201 |
 | GET | /sessions/:code | Any logged-in account | 200 |
 | PATCH | /sessions/:code | Host/Admin | 200 |
@@ -127,16 +132,60 @@ Errors always use one shape:
 { "error": { "code": "...", "message": "..." } }
 ```
 
-Error codes used by the accounts part:
+### Lists: paging, search and sorting
+
+`GET /question-sets` answers `{ "data": [...], "meta": { "page", "limit", "total", "pages" } }`. An empty list is still 200.
+
+| Query | Default | Rule |
+|---|---|---|
+| page | 1 | A whole number from 1 |
+| limit | 10 | A whole number from 1 to 50 |
+| sort | set_id | One of `set_id`, `title`, `subject`, `grade_level` (anything else is 400) |
+| order | asc | `asc` or `desc` |
+| q | none | Searches title and subject, up to 100 characters |
+
+### Question bank rules
+
+- Only the owner of a set (or an admin) may read or change its questions. Anyone else gets 403.
+- A set that a game has already used is frozen: adding, editing or deleting a question answers 409 `SET_IN_USE`.
+- A question has 2 to 4 choices and exactly one correct answer, sent as one number `correct_index` that points inside `choices` (the first choice is 0).
+- The server sets each question's `position` (1, 2, 3 ...) and closes the gaps after a delete. A client cannot choose it.
+- A question is saved together with its position in one database transaction.
+
+Question body:
+
+| Field | Rule |
+|---|---|
+| question_text | Required for a new question, 3 to 500 characters |
+| choices | Required for a new question, a list of 2 to 4 texts of 1 to 100 characters |
+| correct_index | Required for a new question, a whole number that points to one of the choices |
+| type | Optional, `multiple-choice` |
+| time_limit_sec | Optional, 5 to 120, default 30 |
+
+### Cover picture
+
+`PUT /question-sets/:id/cover` takes one picture in a multipart form field named `cover`.
+
+- Only PNG or JPEG, at most 1 MB.
+- The server chooses the file name. The answer has `picture`, for example `/uploads/covers/set-5-<random>.png`, and the file is served from that address.
+- Uploaded pictures stay in `uploads/covers/` and are not committed to Git.
+
+### Error codes
 
 | Status | Code | When |
 |---|---|---|
+| 400 | VALIDATION_FAILED | A field is missing or breaks a rule (the answer lists which one) |
+| 400 | INVALID_FILE_TYPE | The cover is not a PNG or JPEG |
+| 400 | COVER_REQUIRED, INVALID_UPLOAD | No picture, or more than one, in the form field `cover` |
 | 401 | INVALID_CREDENTIALS | Wrong password or unknown school ID (the same answer for both) |
 | 401 | AUTH_REQUIRED | No token was sent |
 | 401 | INVALID_TOKEN | The token is bad, changed or expired |
-| 403 | FORBIDDEN | The role may not do this |
+| 403 | FORBIDDEN | The role may not do this, or the set belongs to another host |
+| 404 | QUESTION_SET_NOT_FOUND, QUESTION_NOT_FOUND | No such set, or no such question in that set |
 | 409 | SCHOOL_ID_TAKEN, USERNAME_TAKEN, EMAIL_TAKEN | The value is already used |
 | 409 | CANNOT_CHANGE_OWN_ROLE | An admin tried to change their own role |
+| 409 | SET_IN_USE | The set was used by a game, so its questions can no longer change |
+| 413 | FILE_TOO_LARGE | The cover is bigger than 1 MB |
 
 ## What "Completed" Means in My Game
 
@@ -164,14 +213,13 @@ A player has completed a game when the player has answered every question in the
 
 ## Testing with Postman
 
-The collection is `postman/libra-quest-api.postman_collection.json`. It has four folders:
+The collection is `postman/libra-quest-api.postman_collection.json`. It has five folders and every request has tests (`pm.test`):
 
-1. Log in (run this folder first): logs in a host, an admin and a player, and saves their tokens.
-2. Accounts: register, duplicate values (409), weak passwords (400), the same 401 for a wrong password and an unknown school ID, and `/auth/me` with a good, missing, changed and made-up token.
-3. Users and roles (admin): list accounts, promote and demote, an admin changing their own role (409), a player or host trying (403).
-4. Guards on the Week 11 routes: the roles that may use `/question-sets` and `/sessions`.
-
-Every request has tests (`pm.test`).
+1. **Log in (run this folder first)**: logs in a host, an admin and a player, and saves their tokens.
+2. **Accounts**: register, duplicate values (409), weak passwords (400), the same 401 for a wrong password and an unknown school ID, and `/auth/me` with a good, missing, changed and made-up token.
+3. **Users and roles (admin)**: list accounts, promote and demote, an admin changing their own role (409), a player or host trying (403).
+4. **Guards on the Week 11 routes**: the roles that may use `/question-sets` and `/sessions`.
+5. **Question bank (QB01 to QB26)**: paging, empty search, bad sort and limit (400), nested questions with the transaction and position rules, one correct answer only (400), include (200), a player and a second host (403), a missing set (404), a set used by a game (409), edit and delete, and the cover upload (good picture, wrong type 400, too big 413). The upload files are in `postman/fixtures/`.
 
 How to run it:
 
@@ -184,12 +232,18 @@ npm run dev
 
 2. In Postman, import the collection file.
 3. Check that the collection variables are `baseUrl = http://localhost:3001/api/v1` and `demoPassword = Libra-Demo-2026`.
-4. Right-click the collection, choose **Run collection**, and run it.
+4. Right-click the collection, choose **Run collection**, and run it. Do not send requests by hand in between, and run `npm run db:reset` again before every full run.
+
+From the terminal (run it from the project folder, so the upload files are found):
+
+```
+npx newman run postman/libra-quest-api.postman_collection.json
+```
 
 Expected result:
 
 ```
-Tests passed: 101, failed: 0
+requests: 64   assertions: 130   failed: 0
 ```
 
 The old Week 11 collection (it used the `X-Demo-User` header) is not used any more. It stays in the Git history.
