@@ -1,4 +1,5 @@
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
+const { pageRules, sortRules } = require('./list.validator');
 
 const idParam = param('id')
   .isInt({ min: 1 }).withMessage('id must be a positive whole number')
@@ -34,6 +35,21 @@ const gradeLevel = () => body('grade_level')
   .trim()
   .isLength({ min: 1, max: 30 }).withMessage('grade_level must be 1 to 30 characters long');
 
+const SORT_COLUMNS = ['set_id', 'title', 'subject', 'grade_level'];
+
+const listRules = [
+  ...pageRules,
+  ...sortRules(SORT_COLUMNS),
+  query('q').optional().isString().withMessage('q must be text')
+    .bail().trim().isLength({ max: 100 }).withMessage('q must be at most 100 characters'),
+];
+
+// "read one": ?include=questions loads the questions in the same query
+const getRules = [
+  idParam,
+  query('include').optional().isIn(['questions']).withMessage('include may only be: questions'),
+];
+
 const createRules = [title(), description(), subject(), gradeLevel()];
 
 // PATCH: every field is optional, but at least one must be sent.
@@ -53,4 +69,4 @@ const updateRules = [
   }),
 ];
 
-module.exports = { idParam, createRules, updateRules };
+module.exports = { idParam, listRules, getRules, createRules, updateRules };
