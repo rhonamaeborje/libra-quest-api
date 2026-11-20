@@ -19,6 +19,7 @@ This is my own build of my group's game concept. Every commit in this repository
 | Accounts and security | bcryptjs (password hashes), jsonwebtoken (login tokens), cors, helmet |
 | File upload | multer |
 | API testing | Postman (collection with tests), newman |
+| Automated tests | Jest (unit tests with jest.mock), supertest (HTTP tests) |
 
 ## Setup
 
@@ -54,13 +55,17 @@ npm run dev
 | PORT | 3001 | Port the API listens on (the library assigns the final port at deployment) |
 | DB_HOST | 127.0.0.1 | PostgreSQL host |
 | DB_PORT | 5432 | PostgreSQL port |
-| DB_NAME | libra_quest | Database name |
+| DB_NAME | libra_quest | Database name (tests use `<DB_NAME>_test`) |
 | DB_USER | postgres | Database user |
 | DB_PASSWORD | your own password | Database password |
+| DATABASE_URL | postgres://user:password@host:5432/name | Optional. On a server, one address replaces the five `DB_` keys |
+| DB_SSL | true | Optional. Set to `true` when the database needs SSL (Render's external address) |
 | HUB_API_KEY | dev-hub-key | The key the Library Game Hub sends to read results |
 | JWT_SECRET | 64 random characters | Signs the login tokens. Never commit it |
 | JWT_EXPIRES_IN | 1h | How long a login token lasts |
 | CORS_ORIGINS | http://localhost:5173 | The web pages that may read the API's answers |
+| ADMIN_SCHOOL_ID | your admin's school ID | Server only. `scripts/create-admin.js` makes the first ADMIN from it |
+| ADMIN_PASSWORD | at least 12 characters | Server only. The first admin's password. Never commit it |
 
 ## Demo accounts
 
@@ -194,14 +199,14 @@ Stars (the server decides, never the client):
 
 | When a correct answer arrives | Stars |
 |---|---|
-| In the first third of the time limit | 5 |
-| In the second third | 3 |
-| In the last third | 1 |
+| Within 10 seconds | 5 |
+| Within 20 seconds | 3 |
+| Later, but inside the question's time limit | 1 |
 | A wrong answer, or one after the time limit | 0 |
 
-Example: a 30 second question gives 5 stars up to 10 seconds, 3 stars up to 20 seconds and 1 star up to 30 seconds.
+Example: with a 30 second limit, a correct answer at 8 seconds earns 5 stars, at 15 seconds earns 3 stars and at 25 seconds earns 1 star. A correct answer at 31 seconds earns 0.
 
-The leaderboard (`GET /sessions/:code/leaderboard`) ranks players by total stars, highest first. When two players have the same stars, the lower total response time ranks higher.
+The leaderboard (`GET /sessions/:code/leaderboard`) ranks players by total stars, highest first. Players with the same total stars share a rank (1, 2, 2, 4).
 
 ### Error codes
 
@@ -245,6 +250,24 @@ A player has completed a game when the player has answered every question in the
 | npm run db:check | Counts the rows in every table |
 | npm run db:reset | Empties the database, rebuilds every table, and reloads the seed data |
 | npm run check | Runs the same automatic check that GitHub runs after every push |
+| npm test | Runs all the Jest tests (unit and HTTP) |
+| npm run test:coverage | Runs the tests and writes the coverage report to `coverage/index.html` |
+| npm run start:render | Server start: runs the migrations, creates the first admin, starts the API |
+
+## How to run the tests
+
+The tests use Jest and supertest. PostgreSQL must be running and `.env` must be filled in.
+
+1. Install once: `npm install`
+2. Run all tests: `npm test`
+3. Run them with the coverage report: `npm run test:coverage`
+
+The tests never touch your own data. Jest sets `NODE_ENV=test`, so the API uses the database `<DB_NAME>_test` (for example `libra_quest_test`). Before every run, `tests/setup/global-setup.js` rebuilds that database from the migrations and the seeders.
+
+- `tests/unit/` has the unit tests. They use `jest.mock` instead of the database, for the scoring rule (`starsFor`), the answer rules, the leaderboard ranks and the login rules.
+- `tests/api/` has the HTTP tests. Each file sends real requests through the whole app for one module: accounts, users, question sets and sessions.
+
+Latest result: 56 tests passing in 8 suites, 62.84% of lines covered.
 
 ## Testing with Postman
 
