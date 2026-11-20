@@ -1,4 +1,4 @@
-const { GameSession } = require('../models');
+const { GameSession, Question } = require('../models');
 
 function findByCode(code) {
   return GameSession.findOne({ where: { join_code: code } });
@@ -12,4 +12,9 @@ function update(session, changes) {
   return session.update(changes);
 }
 
-module.exports = { findByCode, create, update };
+// How many questions the set of a game has.
+function countQuestions(setId) {
+  return Question.count({ where: { set_id: setId } });
+}
+
+module.exports = { findByCode, create, update, countQuestions };
