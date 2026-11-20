@@ -122,9 +122,12 @@ A token lasts 1 hour (`JWT_EXPIRES_IN`). After that, log in again.
 | DELETE | /question-sets/:id/questions/:questionId | Owner Host/Admin | 204 |
 | POST | /sessions | Host/Admin | 201 |
 | GET | /sessions/:code | Any logged-in account | 200 |
-| PATCH | /sessions/:code | Host/Admin | 200 |
+| PATCH | /sessions/:code | Host/Admin (start, next question with `current_position`, close) | 200 |
 | POST | /sessions/:code/players | Any logged-in account | 201 or 200 |
 | GET | /sessions/:code/players | Any logged-in account | 200 |
+| GET | /sessions/:code/question | A player seated in the game (never shows the correct answer) | 200 |
+| POST | /sessions/:code/answers | A player seated in the game | 201 |
+| GET | /sessions/:code/leaderboard | Any logged-in account | 200 |
 
 Errors always use one shape:
 
@@ -170,6 +173,36 @@ Question body:
 - The server chooses the file name. The answer has `picture`, for example `/uploads/covers/set-5-<random>.png`, and the file is served from that address.
 - Uploaded pictures stay in `uploads/covers/` and are not committed to Git.
 
+### Playing a game
+
+1. The host creates a game with `POST /sessions` (`{ "set_id": ... }`). The answer has a 6-digit join code. Players join with `POST /sessions/:code/players` and a nickname.
+2. The host sends `PATCH /sessions/:code` with `{ "status": "RUNNING" }`. The first question opens and the server starts its clock (`question_started_at`).
+3. A player reads the open question with `GET /sessions/:code/question`. The answer never contains `correct_index`.
+4. A player answers with `POST /sessions/:code/answers` and `{ "question_id": ..., "choice_index": ... }`. The request does not carry the time: the server measures it from `question_started_at`, so a client cannot change it. The answer says whether the choice was correct and how many stars it earned.
+5. The host moves on with `PATCH /sessions/:code` and `{ "current_position": n }`. Only the next question is allowed (409 `NOT_NEXT_QUESTION`). After the last question, asking for another one is 409 `NO_MORE_QUESTIONS`.
+6. The host closes the game with `{ "status": "CLOSED" }`. The library reads the finished game at `GET /results`.
+
+Rules the server checks, in this order, when a player answers:
+
+1. The game must be running (409).
+2. The caller must be a player in that game (403).
+3. The question must be the one that is open now (409).
+4. The choice must be a valid choice of that question (400).
+5. A player has one answer per question. A second answer is 409.
+
+Stars (the server decides, never the client):
+
+| When a correct answer arrives | Stars |
+|---|---|
+| In the first third of the time limit | 5 |
+| In the second third | 3 |
+| In the last third | 1 |
+| A wrong answer, or one after the time limit | 0 |
+
+Example: a 30 second question gives 5 stars up to 10 seconds, 3 stars up to 20 seconds and 1 star up to 30 seconds.
+
+The leaderboard (`GET /sessions/:code/leaderboard`) ranks players by total stars, highest first. When two players have the same stars, the lower total response time ranks higher.
+
 ### Error codes
 
 | Status | Code | When |
@@ -180,16 +213,18 @@ Question body:
 | 401 | INVALID_CREDENTIALS | Wrong password or unknown school ID (the same answer for both) |
 | 401 | AUTH_REQUIRED | No token was sent |
 | 401 | INVALID_TOKEN | The token is bad, changed or expired |
-| 403 | FORBIDDEN | The role may not do this, or the set belongs to another host |
+| 403 | FORBIDDEN | The role may not do this, the set belongs to another host, or the caller is not a player in the game |
 | 404 | QUESTION_SET_NOT_FOUND, QUESTION_NOT_FOUND | No such set, or no such question in that set |
 | 409 | SCHOOL_ID_TAKEN, USERNAME_TAKEN, EMAIL_TAKEN | The value is already used |
 | 409 | CANNOT_CHANGE_OWN_ROLE | An admin tried to change their own role |
 | 409 | SET_IN_USE | The set was used by a game, so its questions can no longer change |
+| 409 | NOT_NEXT_QUESTION | The host asked for a question that is not the next one |
+| 409 | NO_MORE_QUESTIONS | The host asked for a question after the last one |
 | 413 | FILE_TOO_LARGE | The cover is bigger than 1 MB |
 
 ## What "Completed" Means in My Game
 
-A player has completed a game when the player has answered every question in the selected question set, regardless of whether the answers were correct or incorrect.
+A player has completed a game when the player has answered every question in the selected question set, regardless of whether the answers were correct or incorrect. `GET /results` marks such a player as completed.
 
 ## Tables
 
@@ -213,13 +248,14 @@ A player has completed a game when the player has answered every question in the
 
 ## Testing with Postman
 
-The collection is `postman/libra-quest-api.postman_collection.json`. It has five folders and every request has tests (`pm.test`):
+The collection is `postman/libra-quest-api.postman_collection.json`. It has six folders and every request has tests (`pm.test`):
 
 1. **Log in (run this folder first)**: logs in a host, an admin and a player, and saves their tokens.
 2. **Accounts**: register, duplicate values (409), weak passwords (400), the same 401 for a wrong password and an unknown school ID, and `/auth/me` with a good, missing, changed and made-up token.
 3. **Users and roles (admin)**: list accounts, promote and demote, an admin changing their own role (409), a player or host trying (403).
 4. **Guards on the Week 11 routes**: the roles that may use `/question-sets` and `/sessions`.
 5. **Question bank (QB01 to QB26)**: paging, empty search, bad sort and limit (400), nested questions with the transaction and position rules, one correct answer only (400), include (200), a player and a second host (403), a missing set (404), a set used by a game (409), edit and delete, and the cover upload (good picture, wrong type 400, too big 413). The upload files are in `postman/fixtures/`.
+6. **Play a whole game (PG01 to PG26)**: the host makes a set with two questions and starts a game, two players join, and each answers every question. It also checks an answer before the start (409), a second answer (409), someone outside the game (403), the wrong question (409), a bad choice (400), skipping a question (409), moving past the last question (409), the leaderboard, and `/results` with the Hub key listing the game that was played.
 
 How to run it:
 
@@ -231,7 +267,7 @@ npm run dev
 ```
 
 2. In Postman, import the collection file.
-3. Check that the collection variables are `baseUrl = http://localhost:3001/api/v1` and `demoPassword = Libra-Demo-2026`.
+3. Check that the collection variables are `baseUrl = http://localhost:3001/api/v1`, `demoPassword = Libra-Demo-2026` and `hubKey = dev-hub-key`.
 4. Right-click the collection, choose **Run collection**, and run it. Do not send requests by hand in between, and run `npm run db:reset` again before every full run.
 
 From the terminal (run it from the project folder, so the upload files are found):
@@ -243,7 +279,7 @@ npx newman run postman/libra-quest-api.postman_collection.json
 Expected result:
 
 ```
-requests: 64   assertions: 130   failed: 0
+requests: 90   assertions: 162   failed: 0
 ```
 
 The old Week 11 collection (it used the `X-Demo-User` header) is not used any more. It stays in the Git history.
