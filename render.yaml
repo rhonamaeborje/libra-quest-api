@@ -1,9 +1,9 @@
 # Render Blueprint: one free web service and one free PostgreSQL database.
 # In the Render dashboard: New > Blueprint > this repository. Render reads this file.
-# Change the two "name" values: they become part of your public address.
+# The two "name" values become part of the public address.
 services:
   - type: web
-    name: CHANGE-ME-yourgame-yourname
+    name: libra-quest-rhonamae
     runtime: node
     plan: free
     region: singapore
@@ -15,7 +15,7 @@ services:
         value: production
       - key: DATABASE_URL
         fromDatabase:
-          name: CHANGE-ME-yourgame-yourname-db
+          name: libra-quest-rhonamae-db
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -32,8 +32,8 @@ services:
         sync: false
 
 databases:
-  - name: CHANGE-ME-yourgame-yourname-db
+  - name: libra-quest-rhonamae-db
     plan: free
     region: singapore
-    databaseName: CHANGE_ME_your_game_slug
+    databaseName: libra_quest
     ipAllowList: []          # only services inside Render may connect
