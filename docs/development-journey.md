@@ -81,7 +81,7 @@ One entry per milestone, written the week you did it. Newest at the bottom.
   - `render.yaml`: named the web service and the database. No secret values are written in the file.
   - `scripts/create-admin.js`: creates the first ADMIN from `ADMIN_SCHOOL_ID` and `ADMIN_PASSWORD`.
   - Production rehearsal on my computer: an empty database (`libra_quest_rehearsal`), `DATABASE_URL`, `NODE_ENV=production` and the admin variables. The migrations ran, the admin was created, `/health` answered 200 with `"database": "up"`, and the admin logged in and got a token.
-- Evidence: [pull request link] · 1c6624c · 2614b55 · e1f326c · d0943c1 · [hash of the create-admin fix] (check runs #50 to #53 green; local check: lines I, J and both L lines green)
+- Evidence: [pull request link] · 1c6624c · 2614b55 · e1f326c · d0943c1 · aa1caa8 (check runs #50 to #55 green; local check: lines I, J and both L lines green)
 - Problem I hit: In the rehearsal, `npm run start:render` stopped before the API started. The terminal said `create-admin failed: notNull Violation: User.username cannot be null`. The migrations had all run, but the admin was not created.
 - How I solved it: The `users` table has a required `username` column. My register code makes a username from the school ID when none is sent, but the kit's `create-admin.js` did not, so the database refused the admin. I added `username: user_` plus the digits of the school ID to the `defaults` in `create-admin.js`, the same rule as register. I ran `npm run start:render` again and the admin was created. I used Claude to help me read the error and check my edit. I ran the rehearsal and every check myself.
 - Decision I made and why:
