@@ -51,6 +51,25 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: A transaction saves a group of changes all together or not at all. When I add or delete a question, the question and the positions of its neighbours change in one transaction, so a failure halfway can never leave two questions with the same position or a gap.
 
 ## M3 · Gameplay
+- Dates worked: Nov 18 to Nov 19, 2026 · Time spent: 4 Hours per Day
+- Goal: Let a host run a game: start it, move through the questions one at a time, let players answer against the clock, and show who is winning.
+- What I built:
+  - Migration that adds `current_position` and `question_started_at` to `game_sessions`, and a rule that a player has one answer per question and starts with zero stars.
+  - `gameplay.service.js` (`starsFor`, `currentQuestion`, `submitAnswer`, `leaderboard`), `gameplay.repository.js` and `gameplay.controller.js`.
+  - Routes: `GET /sessions/:code/question`, `POST /sessions/:code/answers`, `GET /sessions/:code/leaderboard`, and `PATCH /sessions/:code` now accepts `current_position` (only the next question; 409 `NOT_NEXT_QUESTION`, and 409 `NO_MORE_QUESTIONS` after the last).
+  - `/results` now uses the real join code and my "completed" rule: a player completed the game when they answered every question in the set.
+  - Postman folder "Play a whole game" (PG01 to PG26). The whole collection now has 90 requests and 162 tests.
+- Evidence: [pull request link] · [two or three commit hashes from git log --oneline]. Check: lines I and J green.
+- Problem I hit: [for example: the committed `question.js` model had `time_limit_sec` written twice, with `position` inside the first one. I found it with `git diff` before committing.]
+- How I solved it: [what you did, in your own words]
+- Decision I made and why:
+  - The server measures the time from `question_started_at`. The answer request only carries `question_id` and `choice_index`. My Week 7 design sent `time_taken` from the client, but a client can edit anything it sends. The cost: a slow network counts against the player.
+  - Stars: [write your rule, for example 5, 3 or 1 star by how fast a correct answer comes, and 0 for a wrong or late answer]. The cost: [for example, the brackets are fixed fractions of the time limit].
+  - Ties on the leaderboard are broken by lower total response time, as in my game design.
+  - The leaderboard needs a login, like the other session reads.
+- Changes to my design set: The answer request no longer has `time_taken`. The endpoint table gained `GET /sessions/:code/question` and the `current_position` field on `PATCH /sessions/:code`. [Add anything else you changed.] Players, answers and sessions gained [name the columns you added].
+- AI tools: I used Claude to help with the gameplay design, the Postman folder generated into the collection file (my Postman has no Export), and error reading. I ran and tested every request myself.
+- What I would explain to a classmate: The server decides time and score, never the client. Anything a client sends can be edited, so the answer request carries only which question and which choice, and the server works out the stars from its own clock.
 
 ## M4 · Automated tests and server preparation
 
