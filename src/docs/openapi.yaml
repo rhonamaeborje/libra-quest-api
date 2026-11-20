@@ -1,18 +1,20 @@
-# Week 15 kit: starter OpenAPI document. The Hub Contract and account endpoints are written for you.
-# Replace every CHANGE_ME, then add one entry under paths for EVERY endpoint of your game
-# (the check needs at least 15 operations, each with a summary and its responses).
+# OpenAPI 3 description of the Libra Quest API, written by hand and read once when the API starts.
+# Every endpoint of the game is listed under paths, with its summary, who may call it,
+# its parameters, its request body and EVERY response it can give.
 openapi: 3.0.3
 info:
-  title: CHANGE_ME Your Game API
+  title: Libra Quest API
   version: 1.0.0
   description: >
-    CHANGE_ME: one paragraph about your game. Implements Hub Contract v1.3. Every error answers { "error": { "code",
-    "message" } }.
+    Libra Quest is a tournament quiz game for the SorSU Bulan Campus library. A host builds a question set and starts a
+    game, players join with a six-digit code and answer against the clock, and the faster a correct answer arrives the
+    more stars it earns. The server decides the time and the stars. The Library Game Hub reads the finished games from
+    GET /results. Implements Hub Contract v1.3. Every error answers { "error": { "code", "message" } }.
 
 
     Log in with POST /auth/login, then click Authorize and paste the token.
   contact:
-    name: CHANGE_ME your name (your GitHub username)
+    name: Rhona Mae Borje (rhonamaeborje)
 servers:
   - url: /api/v1
     description: This server
@@ -20,6 +22,17 @@ tags:
   - name: Hub Contract
     description: The endpoints every game provides to the Library Game Hub
   - name: Accounts
+    description: Register, log in and read your own account
+  - name: Users
+    description: Admin only. List accounts and change roles
+  - name: Question sets
+    description: A host builds a set of questions and gives it a cover picture
+  - name: Questions
+    description: The questions inside a set
+  - name: Sessions
+    description: A host opens a game, and players join it with a six-digit code
+  - name: Gameplay
+    description: Questions, timed answers and the leaderboard
 components:
   securitySchemes:
     bearerAuth:
@@ -32,6 +45,60 @@ components:
       in: header
       name: X-Hub-Key
       description: The key the Library Game Hub sends
+  parameters:
+    JoinCode:
+      name: code
+      in: path
+      required: true
+      description: The six-digit join code of a game (it does not start with 0)
+      schema:
+        type: string
+        pattern: ^[1-9][0-9]{5}$
+        example: "482913"
+    SetId:
+      name: id
+      in: path
+      required: true
+      description: The id of the question set
+      schema:
+        type: integer
+        minimum: 1
+        example: 1
+    QuestionId:
+      name: questionId
+      in: path
+      required: true
+      description: The id of the question
+      schema:
+        type: integer
+        minimum: 1
+        example: 3
+    UserId:
+      name: id
+      in: path
+      required: true
+      description: The id of the account
+      schema:
+        type: integer
+        minimum: 1
+        example: 3
+    Page:
+      name: page
+      in: query
+      description: Which page to read, from 1
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      description: How many rows per page, 1 to 50
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
   responses:
     BadRequest:
       description: The request is malformed (a field, the URL or the JSON itself)
@@ -47,7 +114,7 @@ components:
                 - field: title
                   message: title must be 3 to 150 characters long
     Unauthorized:
-      description: No login, or the token is not valid
+      description: No login, or the token is not valid (AUTH_REQUIRED or INVALID_TOKEN)
       content:
         application/json:
           schema:
@@ -109,16 +176,20 @@ components:
       properties:
         user_id:
           type: integer
-          example: 1
+          example: 3
+        username:
+          type: string
+          example: player01
         school_id:
           type: string
-          example: 2099-0001
+          example: "55555555"
         full_name:
           type: string
-          example: Maria Ong
+          example: Player User
         email:
           type: string
           format: email
+          example: player01@example.com
         role:
           type: string
           enum:
@@ -140,6 +211,207 @@ components:
         pages:
           type: integer
           example: 3
+    QuestionSet:
+      type: object
+      properties:
+        set_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Library basics
+        description:
+          type: string
+          nullable: true
+          example: Questions about how the library works
+        subject:
+          type: string
+          example: Library skills
+        grade_level:
+          type: string
+          example: College
+        picture:
+          type: string
+          nullable: true
+          description: The address of the cover picture, once one is uploaded
+          example: /uploads/covers/set-1-3f9a1c.png
+        questions:
+          type: array
+          description: Only present with ?include=questions
+          items:
+            $ref: "#/components/schemas/Question"
+    Question:
+      type: object
+      description: A question as the HOST sees it, with the correct answer
+      properties:
+        question_id:
+          type: integer
+          example: 3
+        set_id:
+          type: integer
+          example: 1
+        position:
+          type: integer
+          description: Chosen by the server (1, 2, 3 ...)
+          example: 1
+        question_text:
+          type: string
+          example: What does a call number help you find?
+        type:
+          type: string
+          example: multiple-choice
+        choices:
+          type: array
+          items:
+            type: string
+          example:
+            - A book on the shelf
+            - A librarian
+            - A library card
+            - A login
+        correct_index:
+          type: integer
+          description: The position of the correct choice, the first choice is 0
+          example: 0
+        time_limit_sec:
+          type: integer
+          example: 30
+    QuestionInput:
+      type: object
+      properties:
+        question_text:
+          type: string
+          minLength: 3
+          maxLength: 500
+          example: What does a call number help you find?
+        type:
+          type: string
+          enum:
+            - multiple-choice
+        choices:
+          type: array
+          minItems: 2
+          maxItems: 4
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+          example:
+            - A book on the shelf
+            - A librarian
+            - A library card
+            - A login
+        correct_index:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Exactly one number that points to one of the choices
+          example: 0
+        time_limit_sec:
+          type: integer
+          minimum: 5
+          maximum: 120
+          default: 30
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: integer
+          example: 1
+        join_code:
+          type: string
+          example: "482913"
+        set_id:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum:
+            - OPEN
+            - RUNNING
+            - CLOSED
+        current_position:
+          type: integer
+          description: The position of the question that is open now
+          example: 1
+        question_started_at:
+          type: string
+          format: date-time
+          nullable: true
+    Player:
+      type: object
+      properties:
+        player_id:
+          type: integer
+          example: 7
+        nickname:
+          type: string
+          example: PlayerA
+        total_stars:
+          type: integer
+          example: 0
+    OpenQuestion:
+      type: object
+      description: The question that is open now. It never contains the correct answer.
+      properties:
+        question_id:
+          type: integer
+          example: 3
+        position:
+          type: integer
+          example: 1
+        total:
+          type: integer
+          description: How many questions the set has
+          example: 5
+        question_text:
+          type: string
+          example: What does a call number help you find?
+        type:
+          type: string
+          example: multiple-choice
+        choices:
+          type: array
+          items:
+            type: string
+        time_limit_sec:
+          type: integer
+          example: 30
+        seconds_left:
+          type: number
+          example: 24.5
+    AnswerResult:
+      type: object
+      properties:
+        correct:
+          type: boolean
+          example: true
+        stars_earned:
+          type: integer
+          example: 5
+        total_stars:
+          type: integer
+          example: 5
+        late:
+          type: boolean
+          description: True when the answer arrived after the time limit
+          example: false
+    LeaderboardRow:
+      type: object
+      properties:
+        rank:
+          type: integer
+          description: Equal scores share a rank (1, 2, 2, 4)
+          example: 1
+        player_id:
+          type: integer
+          example: 7
+        nickname:
+          type: string
+          example: PlayerA
+        score:
+          type: integer
+          example: 8
 paths:
   /health:
     get:
@@ -153,11 +425,11 @@ paths:
             application/json:
               example:
                 status: ok
-                service: aklat-arena-api
-                version: 1.4.0
+                service: libra-quest-api
+                version: 1.0.0
                 database: up
                 uptime_seconds: 42
-                timestamp: 2026-11-25T02:00:00.000Z
+                timestamp: "2026-11-25T02:00:00.000Z"
         "503":
           description: The database cannot be reached
   /game-info:
@@ -171,19 +443,20 @@ paths:
           content:
             application/json:
               example:
-                slug: your-game-slug
-                name: Your Game
-                team: Your group (3-1)
-                developer: your-github-username
-                description: One sentence.
-                min_players: 2
-                max_players: 60
+                slug: libraquest
+                name: LibraQuest
+                team: Group 5 (3-2)
+                developer: rhonamaeborje
+                description: Answer speed-based library questions, collect stars, and race to the top of the leaderboard.
+                min_players: 1
+                max_players: 30
                 version: 1.0.0
   /results:
     get:
       tags:
         - Hub Contract
       summary: Finished games, every player, and the podium (rule 7)
+      description: Needs the X-Hub-Key header, never a login token. Games are listed oldest first.
       security:
         - hubKey: []
       parameters:
@@ -195,18 +468,34 @@ paths:
             format: date-time
       responses:
         "200":
-          description: The finished games
-          oldest first: null
+          description: The finished games, oldest first
+          content:
+            application/json:
+              example:
+                game: libraquest
+                generated_at: "2026-11-25T02:00:00.000Z"
+                results:
+                  - session_code: "482913"
+                    ended_at: "2026-11-24T09:30:00.000Z"
+                    players:
+                      - school_id: "55555555"
+                        nickname: PlayerA
+                        score: 8
+                        completed: true
+                    podium:
+                      - rank: 1
+                        nickname: PlayerA
+                        score: 8
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
-          description: The X-Hub-Key header is missing or wrong
+          description: The X-Hub-Key header is missing or wrong (HUB_KEY_REQUIRED)
   /auth/register:
     post:
       tags:
         - Accounts
       summary: Create a PLAYER account
-      description: A role in the body is ignored. Admins promote hosts with PATCH /users/{id}/role.
+      description: A role in the body is ignored. Admins promote hosts with PATCH /users/{id}/role. If no username is sent, the server makes one from the school ID.
       requestBody:
         required: true
         content:
@@ -221,8 +510,14 @@ paths:
               properties:
                 school_id:
                   type: string
-                  pattern: ^\d{4}-\d{4}$
-                  example: 2099-3001
+                  pattern: ^(\d{8}|\d{4}-\d{4})$
+                  description: 8 digits, or 4 digits, a dash and 4 digits
+                  example: "20249901"
+                username:
+                  type: string
+                  pattern: ^[A-Za-z0-9_]{3,30}$
+                  description: Optional. 3 to 30 letters, numbers or underscores
+                  example: nina_cruz
                 full_name:
                   type: string
                   minLength: 2
@@ -231,7 +526,8 @@ paths:
                 email:
                   type: string
                   format: email
-                  example: nina@aklatarena.test
+                  maxLength: 255
+                  example: nina@example.com
                 password:
                   type: string
                   minLength: 8
@@ -240,7 +536,7 @@ paths:
                   example: Libro-2026
       responses:
         "201":
-          description: Created
+          description: Created. The password hash is never returned.
           content:
             application/json:
               schema:
@@ -251,7 +547,11 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "409":
-          description: SCHOOL_ID_TAKEN or EMAIL_TAKEN
+          description: SCHOOL_ID_TAKEN, USERNAME_TAKEN, EMAIL_TAKEN or ACCOUNT_EXISTS
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /auth/login:
     post:
       tags:
@@ -269,10 +569,10 @@ paths:
               properties:
                 school_id:
                   type: string
-                  example: 2099-0001
+                  example: "12345678"
                 password:
                   type: string
-                  example: Aklat-Demo-2026
+                  example: Libra-Demo-2026
       responses:
         "200":
           description: Logged in
@@ -281,18 +581,22 @@ paths:
               example:
                 token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.sig
                 token_type: Bearer
-                expires_in: 1h
+                expires_in: 3600
                 user:
                   user_id: 1
-                  school_id: 2099-0001
-                  full_name: Maria Ong
-                  email: maria.ong@aklatarena.test
+                  username: host01
+                  school_id: "12345678"
+                  full_name: Host User
+                  email: host01@example.com
                   role: HOST
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
-          description: INVALID_CREDENTIALS
-          the same answer for an unknown school ID and a wrong password: null
+          description: INVALID_CREDENTIALS. The answer is the same for an unknown school ID and a wrong password.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /auth/me:
     get:
       tags:
@@ -312,3 +616,745 @@ paths:
                     $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List the accounts (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /users/{id}/role:
+    patch:
+      tags:
+        - Users
+      summary: Change the role of an account (admin only)
+      description: An admin cannot change their own role.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - PLAYER
+                    - HOST
+                    - ADMIN
+                  example: HOST
+      responses:
+        "200":
+          description: The role was changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: CANNOT_CHANGE_OWN_ROLE
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /question-sets:
+    get:
+      tags:
+        - Question sets
+      summary: List question sets (a host sees their own, an admin sees all)
+      description: Answers { data, meta }. An empty list is still 200.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: sort
+          in: query
+          description: The column to sort by. Anything else is 400.
+          schema:
+            type: string
+            enum:
+              - set_id
+              - title
+              - subject
+              - grade_level
+            default: set_id
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+        - name: q
+          in: query
+          description: Searches title and subject, up to 100 characters
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: One page of question sets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/QuestionSet"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags:
+        - Question sets
+      summary: Create a question set
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - subject
+                - grade_level
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 150
+                  example: Library basics
+                description:
+                  type: string
+                  nullable: true
+                  example: Questions about how the library works
+                subject:
+                  type: string
+                  minLength: 2
+                  maxLength: 60
+                  example: Library skills
+                grade_level:
+                  type: string
+                  minLength: 1
+                  maxLength: 30
+                  example: College
+      responses:
+        "201":
+          description: Created. The caller owns the set.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionSet"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /question-sets/{id}:
+    get:
+      tags:
+        - Question sets
+      summary: Read one question set (owner or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+        - name: include
+          in: query
+          description: Use include=questions to load the questions in the same query
+          schema:
+            type: string
+            enum:
+              - questions
+      responses:
+        "200":
+          description: The set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionSet"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - Question sets
+      summary: Change a question set (owner or admin)
+      description: Send at least one of title, description, subject, grade_level.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 150
+                description:
+                  type: string
+                  nullable: true
+                subject:
+                  type: string
+                  minLength: 2
+                  maxLength: 60
+                grade_level:
+                  type: string
+                  minLength: 1
+                  maxLength: 30
+      responses:
+        "200":
+          description: The changed set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionSet"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags:
+        - Question sets
+      summary: Delete a question set (owner or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /question-sets/{id}/cover:
+    put:
+      tags:
+        - Question sets
+      summary: Upload the cover picture of a set (owner or admin)
+      description: One PNG or JPEG, at most 1 MB, sent in the form field cover. The server chooses the file name.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - cover
+              properties:
+                cover:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: The set, with its picture address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionSet"
+        "400":
+          description: INVALID_FILE_TYPE, COVER_REQUIRED or INVALID_UPLOAD
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          description: FILE_TOO_LARGE. The picture is bigger than 1 MB.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /question-sets/{id}/questions:
+    get:
+      tags:
+        - Questions
+      summary: List the questions of a set (owner or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+      responses:
+        "200":
+          description: The questions, in position order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags:
+        - Questions
+      summary: Add a question to a set (owner or admin)
+      description: 2 to 4 choices and exactly one correct_index. The server sets the position. A set that a game has used is frozen (409 SET_IN_USE).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/QuestionInput"
+                - type: object
+                  required:
+                    - question_text
+                    - choices
+                    - correct_index
+      responses:
+        "201":
+          description: Created, saved together with its position in one transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: SET_IN_USE. A game has used this set, so its questions can no longer change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /question-sets/{id}/questions/{questionId}:
+    patch:
+      tags:
+        - Questions
+      summary: Change a question (owner or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+        - $ref: "#/components/parameters/QuestionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "200":
+          description: The changed question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: SET_IN_USE
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Questions
+      summary: Delete a question (owner or admin)
+      description: The server closes the gap in the positions.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SetId"
+        - $ref: "#/components/parameters/QuestionId"
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: SET_IN_USE
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /sessions:
+    post:
+      tags:
+        - Sessions
+      summary: Open a game for a question set (host or admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - set_id
+              properties:
+                set_id:
+                  type: integer
+                  minimum: 1
+                  example: 1
+      responses:
+        "201":
+          description: The game is open. The answer has the six-digit join code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /sessions/{code}:
+    get:
+      tags:
+        - Sessions
+      summary: Read a game by its join code (any logged-in account)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JoinCode"
+      responses:
+        "200":
+          description: The game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - Sessions
+      summary: Start, advance or close a game (host or admin)
+      description: Send EITHER status (RUNNING or CLOSED) OR current_position, never both. Starting opens the first question and starts the server clock. current_position may only be the next question.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JoinCode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - RUNNING
+                    - CLOSED
+                current_position:
+                  type: integer
+                  minimum: 1
+                  example: 2
+      responses:
+        "200":
+          description: The changed game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: NOT_NEXT_QUESTION or NO_MORE_QUESTIONS
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /sessions/{code}/players:
+    post:
+      tags:
+        - Sessions
+      summary: Join a game with a nickname (any logged-in account)
+      description: A second join by the same account answers 200 with the same seat.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JoinCode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nickname
+              properties:
+                nickname:
+                  type: string
+                  minLength: 2
+                  maxLength: 24
+                  example: PlayerA
+      responses:
+        "200":
+          description: The account already had a seat (a rejoin)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+        "201":
+          description: Joined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    get:
+      tags:
+        - Sessions
+      summary: List the players of a game (any logged-in account)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JoinCode"
+      responses:
+        "200":
+          description: The players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Player"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /sessions/{code}/question:
+    get:
+      tags:
+        - Gameplay
+      summary: The question that is open now (a player in the game, or its host)
+      description: Never contains correct_index. seconds_left is worked out by the server.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JoinCode"
+      responses:
+        "200":
+          description: The open question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenQuestion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: SESSION_NOT_RUNNING. The game has not started or is closed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /sessions/{code}/answers:
+    post:
+      tags:
+        - Gameplay
+      summary: Answer the open question (a player in the game)
+      description: The request does not carry the time. The server measures it from question_started_at. Checks run in this order - the game is running (409), the caller has a seat (403), it is the open question (409), the choice exists (400), the question was not answered yet (409).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JoinCode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question_id
+                - choice_index
+              properties:
+                question_id:
+                  type: integer
+                  minimum: 1
+                  example: 3
+                choice_index:
+                  type: integer
+                  minimum: 0
+                  example: 0
+      responses:
+        "201":
+          description: The answer was saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerResult"
+        "400":
+          description: VALIDATION_FAILED or INVALID_CHOICE
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: SESSION_NOT_RUNNING, NOT_CURRENT_QUESTION or ALREADY_ANSWERED
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /sessions/{code}/leaderboard:
+    get:
+      tags:
+        - Gameplay
+      summary: The leaderboard of a game (any logged-in account)
+      description: Players ranked by total stars, highest first. Equal scores share a rank.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JoinCode"
+        - name: limit
+          in: query
+          description: How many rows to show, 1 to 50
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: The ranked players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardRow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"

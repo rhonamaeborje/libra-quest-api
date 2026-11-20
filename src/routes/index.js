@@ -9,8 +9,7 @@ router.use('/game-info', require('./game-info.routes'));
 router.use('/results', require('./results.routes'));
 router.use('/auth', require('./auth.routes'));
 
-// Docs routes go here in Milestone 5 (before currentUser):
-// router.use(require('./docs.routes'));
+router.use(require('./docs.routes'));
 
 // JWT middleware AFTER the public routes
 router.use(currentUser);
