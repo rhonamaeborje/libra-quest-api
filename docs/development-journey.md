@@ -59,15 +59,15 @@ One entry per milestone, written the week you did it. Newest at the bottom.
   - Routes: `GET /sessions/:code/question`, `POST /sessions/:code/answers`, `GET /sessions/:code/leaderboard`, and `PATCH /sessions/:code` now accepts `current_position` (only the next question; 409 `NOT_NEXT_QUESTION`, and 409 `NO_MORE_QUESTIONS` after the last).
   - `/results` now uses the real join code and my "completed" rule: a player completed the game when they answered every question in the set.
   - Postman folder "Play a whole game" (PG01 to PG26). The whole collection now has 90 requests and 162 tests.
-- Evidence: [pull request link] · [two or three commit hashes from git log --oneline]. Check: lines I and J green.
-- Problem I hit: [for example: the committed `question.js` model had `time_limit_sec` written twice, with `position` inside the first one. I found it with `git diff` before committing.]
-- How I solved it: [what you did, in your own words]
+- Evidence: https://github.com/rhonamaeborje/libra-quest-api/pull/5 · 70bcbb9 · 61c6583 · d05749e. Check: lines I and J green.
+- Problem I hit: the committed `question.js` model had `time_limit_sec` written twice, with `position` inside the first one. I found it with `git diff` before committing.
+- How I solved it: I removed the second `time_limit_sec` and kept `position` next to it in one field list, ran `git diff` again to check that only the intended lines changed, and then committed.
 - Decision I made and why:
   - The server measures the time from `question_started_at`. The answer request only carries `question_id` and `choice_index`. My Week 7 design sent `time_taken` from the client, but a client can edit anything it sends. The cost: a slow network counts against the player.
-  - Stars: [write your rule, for example 5, 3 or 1 star by how fast a correct answer comes, and 0 for a wrong or late answer]. The cost: [for example, the brackets are fixed fractions of the time limit].
-  - Ties on the leaderboard are broken by lower total response time, as in my game design.
+  - Stars: a correct answer earns 5 stars within 10 seconds, 3 stars within 20 seconds, and 1 star later but inside the question's time limit. A wrong answer, or one after the time limit, earns 0. The cost: the brackets are fixed seconds, so a question with a short time limit (5 seconds, for example) can only ever give 5 stars.
+  - Players with the same total stars share a rank (1, 2, 2, 4). The cost: the leaderboard does not break ties by speed, so two players with the same stars are shown as equal even if one was faster overall.
   - The leaderboard needs a login, like the other session reads.
-- Changes to my design set: The answer request no longer has `time_taken`. The endpoint table gained `GET /sessions/:code/question` and the `current_position` field on `PATCH /sessions/:code`. [Add anything else you changed.] Players, answers and sessions gained [name the columns you added].
+- Changes to my design set: The answer request no longer has `time_taken`. The endpoint table gained `GET /sessions/:code/question` and the `current_position` field on `PATCH /sessions/:code`. `game_sessions` gained `current_position` and `question_started_at`. `answers` gained a rule that a player has only one answer per question, and `players.total_stars` starts at 0.
 - AI tools: I used Claude to help with the gameplay design, the Postman folder generated into the collection file (my Postman has no Export), and error reading. I ran and tested every request myself.
 - What I would explain to a classmate: The server decides time and score, never the client. Anything a client sends can be edited, so the answer request carries only which question and which choice, and the server works out the stars from its own clock.
 
@@ -85,7 +85,7 @@ One entry per milestone, written the week you did it. Newest at the bottom.
   - HTTP tests with supertest (`tests/api/`): `auth.api.test.js`, `users.api.test.js`, `question-sets.api.test.js` and `sessions.api.test.js`. They check the status and `error.code`, and they run on the test database.
   - README: a "How to run the tests" section, the new environment variables and the scripts.
   - Result: `npm test` passes with 56 tests in 8 suites. `npm run test:coverage` shows 62.84% of lines. Check line K is green.
-- Evidence: https://github.com/rhonamaeborje/libra-quest-api/pull/6 · [tests pull request link] · 1c6624c · 2614b55 · e1f326c · d0943c1 · aa1caa8 · [hash of a test commit] · [hash of a test commit] (check runs green; local check: lines I, J, K and both L lines green)
+- Evidence: https://github.com/rhonamaeborje/libra-quest-api/pull/6 · https://github.com/rhonamaeborje/libra-quest-api/pull/7 · 1c6624c · 2614b55 · e1f326c · d0943c1 · aa1caa8 (check runs green; local check: lines I, J, K and both L lines green)
 - Problem I hit:
   - In the rehearsal, `npm run start:render` stopped before the API started. The terminal said `create-admin failed: notNull Violation: User.username cannot be null`. The migrations had all run, but the admin was not created.
   - When I started the tests, `git switch -c feature/tests` said the branch already existed, and I still had an uncommitted `package.json`.
@@ -120,9 +120,9 @@ One entry per milestone, written the week you did it. Newest at the bottom.
   - After the README change, the GitHub Actions summary only listed lines A to G, but my own `npm run check` listed A to O. I did not know which one to trust.
 - How I solved it:
   - The live admin is made by `scripts/create-admin.js` from the `ADMIN_SCHOOL_ID` and `ADMIN_PASSWORD` values that I typed in the Render dashboard. My Postman environment "Render" has its own `adminSchoolId` and `adminPassword`, and they did not match.
-   I copied the exact values from my notes into the Postman environment (no spaces before or after), saved it, checked that "Render" was the selected environment, and ran the collection again. It passed 28 of 28.
-  - For the scorecard: I read `check.yml`. It does not run the `scripts/ci-check.js` in my repository: on every push it downloads the official `ci-check.js` from the class template, and that file has a `CHECK_WEEK` setting that the instructor raises each week. So GitHub only shows the lines up to the week the instructor has switched on, and my local copy (the Week 12 to 18 kit) shows all of them. I kept using `npm run check` as my own progress check, and I did not touch `check.yml` or `ci-check.js`, because changing them is not allowed
-  - I read `check.yml`. It does not run the `scripts/ci-check.js` in my repository: on every push it downloads the official `ci-check.js` from the class template, and that file has a `CHECK_WEEK` setting that the instructor raises each week. So GitHub only shows the lines up to the week the instructor has switched on, and my local copy (the Week 12 to 18 kit) shows all of them.
+    I copied the exact values from my notes into the Postman environment (no spaces before or after), saved it, checked that "Render" was the selected environment, and ran the collection again. It passed 28 of 28.
+  - For the scorecard:
+    I read `check.yml`. It does not run the `scripts/ci-check.js` in my repository: on every push it downloads the official `ci-check.js` from the class template, and that file has a `CHECK_WEEK` setting that the instructor raises each week. So GitHub only shows the lines up to the week the instructor has switched on, and my local copy (the Week 12 to 18 kit) shows all of them.
   - I kept using `npm run check` as my own progress check, and I did not touch `check.yml` or `ci-check.js`, because changing them is not allowed.
   - Before I deployed I also looked at the live user list: it had only the accounts I made on the live server, with no demo accounts and no `password_hash`.
   - I used Claude to help me read the errors and to draft the README sections. I ran the smoke test and the check myself.
@@ -135,5 +135,30 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: OpenAPI describes every path and verb with its parameters, request body and every response it can give, and Swagger UI turns that file into a page where anyone can click **Authorize** and try an endpoint. If the document and the API disagree, the document is the one that is wrong, which is why a test reads it.
 
 ## M6 · The SE1 portfolio and the release
+- Dates worked: Nov 20 to Nov 21, 2026 · Time spent: 3 Hours per Day
+- Goal: Finish the written portfolio that lets another student (SE2) understand, run and extend my API without me, and publish a tagged release `v1.0.0`.
+- What I built:
+  - `docs/technical-spec.md`: the architecture, the layers, the security choices, the game rules, the testing (59 tests, 64.31% of lines) and a decisions table with the cost of each choice.
+  - `docs/data-dictionary.md`: every table and every column with one plain sentence each. `docs/api-reference.md`, `docs/user-guide.md` and `docs/se2-handoff.md`.
+  - The six diagrams in `docs/diagrams/`: `use-case.png`, `class.png`, `sequence.png`, `activity.png`, `erd.png` and `architecture.png`, drawn to match the system as built (for example `users.username`, `game_sessions.current_position` and `questions.position`).
+  - `CHANGELOG.md` with real entries, newest first, version 1.0.0 (the same as `package.json`).
+  - README: the "Documentation (SE1 portfolio)" table that links every document, and the latest test result (59 tests in 9 suites, 64.31% of lines).
+  - Removed the leftover debug `console.log` from `src/middlewares/current-user.js`.
+  - A release: tag `v1.0.0` and a GitHub Release with the changelog entry.
+- Evidence: https://github.com/rhonamaeborje/libra-quest-api/pull/10 · 94e625c · 1aa1498 · c7b18dd · 218be70 (check runs green; local check: lines K to O green)
+- Problem I hit:
+  - In Swagger UI, **Authorize** answered 401 on every endpoint. I had pasted my school ID, then the sample token from the docs, and then I logged out by mistake.
+  - Line O of my local check kept failing because `CHANGELOG.md` and the docs still had the kit's bracket placeholders.
+- How I solved it:
+  - A token only comes from `POST /auth/login`. I ran **Try it out** and **Execute** on that endpoint, copied the real token from the Server response (it starts with `eyJ` and has two dots), and pasted only that into **Authorize**. After that the protected endpoints answered 200.
+  - I searched the whole project for the kit's bracket placeholders and replaced every placeholder in my own files. The other hits (`scripts/ci-check.js`, `scripts/make-data-dictionary.js` and `docs/kit-notes/`) belong to the kit, so I did not touch them.
+  - I do not run `npm run docs:dictionary` again, because it would overwrite the table sentences that I wrote by hand.
+  - I used Claude to help me draft the documents and to draw the diagrams from my code and database. I checked each fact against my own code, my migrations and my test run.
+- Decision I made and why:
+  - I wrote the data dictionary by hand, with a sentence for every table and column. The cost: when the database changes, I must update the dictionary myself.
+  - The documents state their numbers (59 tests, 64.31% of lines, 26 operations) and the date when the free database expires, so a reader can check them. The cost: those numbers go stale when the code changes, so they need a review at every release.
+  - One release, `v1.0.0`, tagged on `main` after the pull request is merged and the whole check is green. The cost: any later fix needs a new version and a new changelog entry.
+- Changes to my design set: The ERD and the data dictionary now match the migrations exactly. The deployment diagram shows Render (a web service and a managed PostgreSQL database) instead of "Library Server".
+- What I would explain to a classmate: Documentation is a promise about the code. The data dictionary and the diagrams are checked against the real migrations, so SE2 can trust them, and the changelog and the tag tell them exactly which version of the API they are reading.
 
 ## M7 · The Test Report
