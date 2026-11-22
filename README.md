@@ -301,7 +301,7 @@ The tests never touch your own data. Jest sets `NODE_ENV=test`, so the API uses 
 - `tests/unit/` has the unit tests. They use `jest.mock` instead of the database, for the scoring rule (`starsFor`), the answer rules, the leaderboard ranks and the login rules.
 - `tests/api/` has the HTTP tests. Each file sends real requests through the whole app for one module: accounts, users, question sets and sessions.
 
-Latest result: 56 tests passing in 8 suites, 62.84% of lines covered.
+Latest result: 59 tests passing in 9 suites, 64.31% of lines covered.
 
 ## Testing with Postman
 
