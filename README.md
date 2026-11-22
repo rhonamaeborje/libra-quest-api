@@ -252,6 +252,20 @@ A player has completed a game when the player has answered every question in the
 5. players
 6. answers
 
+## Documentation (SE1 portfolio)
+
+| Document | Where |
+| --- | --- |
+| Technical specification | [docs/technical-spec.md](docs/technical-spec.md) |
+| Data dictionary | [docs/data-dictionary.md](docs/data-dictionary.md) |
+| API reference | [docs/api-reference.md](docs/api-reference.md) |
+| User guide | [docs/user-guide.md](docs/user-guide.md) |
+| SE2 hand-off | [docs/se2-handoff.md](docs/se2-handoff.md) |
+| Development journey | [docs/development-journey.md](docs/development-journey.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
+| Diagrams | [docs/diagrams](docs/diagrams) (use-case, class, sequence, activity, ERD, architecture) |
+| Live API docs | See the Live API link at the top of this README, then add `/docs` |
+
 ## Deploying to Render
 
 The API runs on Render's free plan, described by `render.yaml` (a Blueprint). It starts with `npm run start:render`, which runs the migrations, creates the first admin from environment variables, and then starts the server. No seed data and no demo accounts are loaded on the server.
