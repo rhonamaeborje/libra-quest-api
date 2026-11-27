@@ -161,3 +161,14 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: Documentation is a promise about the code. The data dictionary and the diagrams are checked against the real migrations, so SE2 can trust them, and the changelog and the tag tell them exactly which version of the API they are reading.
 
 ## M7 · The Test Report
+- Dates worked: November 23-26 · Time spent: 2 Hours Per Day
+- Goal: Document evidence that my Libra Quest API works for its main flows, and explain its remaining test gaps before SE2.
+- What I built:
+  - A 20-page Test Report covering all eight testing tools and the v1.0.0 API release.
+  - Results: 42 manual Postman cases passed; Postman Runner showed 137 tests passed; Newman ran 90 requests and 162 assertions with 0 failures; Jest and supertest passed 59 tests in 9 suites; line coverage was 64.31%; the live Render smoke test passed 28 tests.
+- Evidence: [Pull request #13](https://github.com/rhonamaeborje/libra-quest-api/pull/13) · commit `205aff9` · GitHub Actions check #82 passed on `main` at `17cb4e9`. My local `npm run check` passed all 55 checks.
+- Problem I hit: GitHub Actions showed checks only through G, while my local `npm run check` showed A through O, so I was unsure how to report both results.
+- How I solved it: I checked the workflow and learned that GitHub Actions uses the instructor’s `CHECK_WEEK` setting. I left the official workflow unchanged and documented the Actions result separately from my full local check.
+- Decision I made and why: I included the report’s limitations—such as 38.53% branch coverage—and the tests I would add next, so the report gives SE2 an honest picture of what still needs work.
+- Changes to my design set: No API or database design changes; I added `docs/test-report.pdf`.
+- What I would explain to a classmate: A useful test report shows what was tested, the actual results, and what remains untested, so the next developer can build on the evidence.
