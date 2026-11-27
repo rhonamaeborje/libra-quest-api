@@ -143,7 +143,6 @@ One entry per milestone, written the week you did it. Newest at the bottom.
   - The six diagrams in `docs/diagrams/`: `use-case.png`, `class.png`, `sequence.png`, `activity.png`, `erd.png` and `architecture.png`, drawn to match the system as built (for example `users.username`, `game_sessions.current_position` and `questions.position`).
   - `CHANGELOG.md` with real entries, newest first, version 1.0.0 (the same as `package.json`).
   - README: the "Documentation (SE1 portfolio)" table that links every document, and the latest test result (59 tests in 9 suites, 64.31% of lines).
-  - Removed the leftover debug `console.log` from `src/middlewares/current-user.js`.
   - A release: tag `v1.0.0` and a GitHub Release with the changelog entry.
 - Evidence: https://github.com/rhonamaeborje/libra-quest-api/pull/10 · 94e625c · 1aa1498 · c7b18dd · 218be70 (check runs green; local check: lines K to O green)
 - Problem I hit:

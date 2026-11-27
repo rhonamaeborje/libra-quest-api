@@ -10,7 +10,7 @@ All notable changes, newest first.
 - Wrote the technical spec, data dictionary, API reference, user guide and SE2 hand-off.
 - Added the six diagrams: use case, class, sequence, activity, ERD and architecture.
 - Updated the README with the test instructions, the live API link and the deploy steps.
-- Removed the leftover debug log from the current user middleware.
+
 
 ## [0.4.0] (Week 14): Automated tests
 - Added unit tests for the star rules (5, 3, 1 or 0 stars by speed), the answer rules and the leaderboard ranks.
